@@ -10,5 +10,7 @@ namespace Models;
 
 
 class User {
-
+    public function get($a, $b){
+        return true;
+    }
 } 
