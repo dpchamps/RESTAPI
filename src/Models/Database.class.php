@@ -40,6 +40,67 @@ class Database {
         }
     }
 
+    public function update($table, $id, $keyvalue = Array()){
+        if( !is_array($keyvalue) ){
+            throw new \Exception('Expected type array for keyvalue, got: ' .getType($keyvalue));
+        }
+        $update = "UPDATE $table";
+        $set = "SET";
+        $where = "WHERE " . $table.".id= $id";
+        $index = sizeof($keyvalue);
+        foreach($keyvalue as $key => $value){
+            $set .= " $key='$value'";
+            $index--;
+            if($index > 0){
+                $set .= ", ";
+            }
+        }
+        $mysql_statement = $update . " " . $set . " " . $where;
+        $this->query($mysql_statement);
+    }
+
+    public function select($cols, $table, $vals){
+        $select = "SELECT";
+        $from = " FROM $table";
+        $where = " WHERE";
+
+        if( is_array($cols) ){
+            $index = sizeof($cols);
+            foreach($cols as $key => $value){
+
+                $select .= " $value ";
+                $index--;
+                if( $index > 0 ){
+                   $select .= ',';
+                }
+            }
+        } else {
+            $select .= " $cols ";
+        }
+
+        if( is_array($vals) ){
+            $index = sizeof($vals);
+            foreach($vals as $key => $value){
+                $where .= " $key='$value' ";
+                $index--;
+                if( $index > 0 ){
+                    $where .= " AND ";
+                }
+            }
+        }else{
+            throw new \Exception('Need key value pair for setting a value');
+        }
+
+        $sql_statement = $select . " " . $from . " " . $where;
+        return $this->query($sql_statement);
+    }
+
+    public function query($sql_statement){
+        $q = $this->_connection->query($sql_statement);
+
+        return $q;
+
+    }
     /**
      * Empty clone magic method to prevent a duplicate connection
      */

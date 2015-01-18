@@ -67,7 +67,7 @@ class REST_API extends \REST\API {
     }
 
     protected function test(){
-        return "Something worked";
+        return $this->request;
     }
 
 } 
