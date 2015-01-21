@@ -21,23 +21,25 @@ if (!array_key_exists('HTTP_ORIGIN', $_SERVER)) {
 try {
     $API = new \REST\REST_API($_REQUEST['request']);
     echo $API->processAPI();
-    $db = \Models\Database::get_instance();
     /*
+    $db = \Models\Database::get_instance();
+
     $query = $db->select(
         Array(
-            'id' => 'id',
+
             'username' => 'username',
-            'password' => 'password'
+
         ), 'users',
         Array(
-            'username' => 'dummy',
-            'password' => md5('dummy')
+            'token' => 'wcdT54iN0rPeMFtoZlWeJuRonQvj0ttK'
         ));
 
-    var_dump( $query->fetch_assoc() );
-    */
-    $login = new \Models\Auth();
-    $login->check_login('test', 'test');
+   echo $query->fetch_assoc()['username'];
+*/
+    //$login = new \Models\Auth('test', 'test');
+    //$login->check_login('test', 'test');
+
+    /*
     $query = $db->select(
         Array(
             'id' => 'id',
@@ -54,11 +56,7 @@ try {
     foreach($query as $key => $value){
         echo "\n $key  :  $value";
     }
-
-
-
-
-
+*/
     //$db = \Models\Database::get_instance();
     //$db->get_connection();
 } catch (Exception $e){

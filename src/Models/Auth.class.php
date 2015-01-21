@@ -7,22 +7,30 @@ require_once 'Token.class.php';
 
 /**
  * Class Auth
- * Provides methods for authenticating users
+ * Provides methods for authenticating a user
  */
 class Auth {
 
-    private $_connection = Null;
-    private $_db = Null;
+    private $_connection;
+    private $_token;
+
+    private $INACTIVE_TIMEOUT = 900;
+
+    protected $_db;
+    protected $_id;
+
+    protected $login_table = 'users';
     /**
      * generates an auth token of 32 chars in length
      */
     private function generate_token(){
-        return new \Models\Token(32);
+        $token = new \Models\Token(32);
+        return $token;
     }
     private function generate_timestamp(){
         return date('Y-m-d G:i:s');
     }
-    private function get_token_timestamp_pair(){
+    protected function get_token_timestamp_pair(){
         return Array(
             'token' => $this->generate_token(),
             'token_timestamp' => $this->generate_timestamp()
@@ -33,35 +41,47 @@ class Auth {
         $this->_connection = $this->_db->get_connection();
     }
 
-    public function check_login($user, $password){
-        $this->connect_to_db();
+    /**
+     * @param $username
+     * @return int time in seconds between last activity and now
+     */
+    private function inactivity_time($id){
+        $timestamp = $this->_db->select(
+            'token_timestamp',
+            'users',
+            Array( 'id' => $id)
+        )->fetch_assoc()['token_timestamp'];
 
+        $t = strtotime('now') - strtotime($timestamp);
+
+        return $t;
+    }
+    protected  function update_timestamp(){
+        $timestamp = $this->generate_timestamp();
+
+        $this->_db->update(
+            'users',
+            $this->_id,
+            Array( 'token_timestamp' => $timestamp)
+        );
+    }
+    protected function is_inactive($id){
+        $seconds_passed = $this->inactivity_time($id);
+        $inactive = false;
+
+        if($seconds_passed > $this->INACTIVE_TIMEOUT){
+            $inactive = true;
+        }
+
+        return $inactive;
+    }
+
+
+    public function __construct(){
+        $this->connect_to_db();
         if($this->_connection == Null){
             throw new \Exception('No connection to database');
         }
-
-        $query = "SELECT id FROM users WHERE username='$user' AND password=MD5('$password')";
-        $check =  $this->_connection->query($query);
-
-        if($check->num_rows == 1){
-            //user successfully logged in
-            $id = $check->fetch_assoc()['id'];
-            //create a new token, and timestamp
-            $pair = $this->get_token_timestamp_pair();
-            //insert token and timestamp pair into user table
-            $this->_db->update(
-                'users',
-                $id,
-                $pair
-            );
-            //return token/timestamp pair
-            return $pair;
-        }else{
-            throw new \Exception('Username or Password incorrect');
-        }
-
-
-
     }
 
 } 

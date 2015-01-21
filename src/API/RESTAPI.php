@@ -11,19 +11,20 @@ class REST_API extends \REST\API {
         $User = new \Models\User();
 
         if (array_key_exists('token', $this->request) &&
-            !$User->get('token', $this->request['token'])
+            !$User->valid_token($this->request['token'])
         ) {
-            throw new \Exception('Invalid User Token');
-        }
 
+            throw new \Exception('Invalid User Token');
+        }elseif (!array_key_exists('token', $this->request) ){
+            throw new \Exception('Please log in to complete this action');
+        }
         $this->User = $User;
     }
     public function __construct($request) {
         parent::__construct($request);
 
         //first check the endpoint method name, read is allowed without an api key or token
-        if($this->method == 'read' || $this->method == 'test'){
-
+        if($this->endpoint == 'read' || $this->endpoint == 'test' || $this->endpoint == 'login'){
         } else {
             $this->verify_user();
         }
@@ -67,7 +68,24 @@ class REST_API extends \REST\API {
     }
 
     protected function test(){
+
         return $this->request;
+    }
+
+    protected function login(){
+        if(
+            !array_key_exists('username', $this->request) ||
+            !array_key_exists('password', $this->request)
+        ){
+            throw new \Exception('Please provide username and password');
+        }
+        $user = new \Models\User();
+        try {
+            $user->login($this->request['username'], $this->request['password']);
+            return "User logged in";
+        } catch (\Exception $e) {
+            throw $e;
+        }
     }
 
 } 
