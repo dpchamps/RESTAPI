@@ -60,7 +60,7 @@ class Auth {
         $timestamp = $this->generate_timestamp();
 
         $this->_db->update(
-            'users',
+            $this->login_table,
             $this->_id,
             Array( 'token_timestamp' => $timestamp)
         );

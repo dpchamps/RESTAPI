@@ -49,7 +49,10 @@ class Database {
         $where = "WHERE " . $table.".id= $id";
         $index = sizeof($keyvalue);
         foreach($keyvalue as $key => $value){
-            $set .= " $key='$value'";
+
+            $value = ($value==NULL) ? 'NULL' : '\'' . $value . '\'';
+            $set .= " $key=".$value;
+
             $index--;
             if($index > 0){
                 $set .= ", ";
