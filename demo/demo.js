@@ -50,7 +50,7 @@ $("#logout").on('click', function(e){
             console.log(JSON.stringify(data, null, "\t") );
             if(typeof data.error === 'undefined'){
                 responseString = data.username + "has logged out";
-                sessionStorage['token'] = data.token;
+                sessionStorage.removeItem('token');
             }else{
                 responseString = data.error
             }
@@ -73,7 +73,7 @@ $("#write").on('click', function(){
         type: "POST"
     })
         .done(function(data){
-            console.log(JSON.stringify(data.response, null, "\t") );
+            console.log(JSON.stringify(data, null, "\t") );
             /*
             var responseString = '',
                 responseNode = $("#responseNode");
