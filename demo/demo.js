@@ -47,6 +47,7 @@ $("#logout").on('click', function(e){
         .done(function(data){
             var responseString = '',
                 responseNode = $("#responseNode");
+            console.log(JSON.stringify(data, null, "\t") );
             if(typeof data.error === 'undefined'){
                 responseString = data.username + "has logged out";
                 sessionStorage['token'] = data.token;
@@ -55,5 +56,36 @@ $("#logout").on('click', function(e){
             }
 
             responseNode.html( responseString );
+        })
+});
+
+$("#write").on('click', function(){
+    $.ajax({
+        url: 'api/exampleUpdate',
+        data: {
+            username : sessionStorage['username'],
+            token : sessionStorage['token'],
+            update : {
+                'a' : "something new",
+                'b' : "something blue"
+            }
+        },
+        type: "POST"
+    })
+        .done(function(data){
+            console.log(JSON.stringify(data.response, null, "\t") );
+            /*
+            var responseString = '',
+                responseNode = $("#responseNode");
+            console.log(JSON.stringify(data, null, "\t") );
+            if(typeof data.error === 'undefined'){
+                responseString = data.username + "has logged out";
+                sessionStorage['token'] = data.token;
+            }else{
+                responseString = data.error
+            }
+
+            responseNode.html( responseString );
+            */
         })
 });

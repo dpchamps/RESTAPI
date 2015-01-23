@@ -27,20 +27,22 @@ class REST_API extends \REST\API {
         $this->User = $User;
     }
 
-    private function is_post(){
-
-        if( $this->method != 'POST' ){
-
-            throw new \Exception('Method only accepts POST requests. Sent type: ' . $this->method);
+    /**
+     * @param string $type
+     * @throws \Exception
+     */
+    private function is_method($type = ""){
+        $type = strtoupper($type);
+        if ( $this->method != $type ){
+            throw new \Exception('Method only accepts ' . $type . " requests.");
         }
-
-        return true;
     }
+
     public function __construct($request) {
         parent::__construct($request);
 
         //first check the endpoint method name, read is allowed without an api key or token
-        if($this->endpoint == 'read' || $this->endpoint == 'test' || $this->endpoint == 'login' || $this->endpoint == 'logout'){
+        if($this->endpoint == 'read' || $this->endpoint == 'login' ){
         } else {
             $this->verify_user();
         }
@@ -74,7 +76,19 @@ class REST_API extends \REST\API {
 
         return $result;
     }
+    protected function exampleUpdate(){
+        $this->is_method('POST');
+        $some_dummy_write = Array();
+        if(is_array($this->request['update'])){
+            foreach($this->request['update'] as $key => $value){
+                $some_dummy_write[$key] = $value;
+            }
+        }
 
+        return Array(
+            'response' => $some_dummy_write
+        );
+    }
     protected function update(){
 
     }
@@ -82,42 +96,25 @@ class REST_API extends \REST\API {
     protected function delete(){
 
     }
-
-    protected function test(){
-
-        return $this->request;
-    }
-
     protected function login(){
-        //if( $this->method == 'POST'){
-            if(
-                !array_key_exists('username', $this->request) ||
-                !array_key_exists('password', $this->request)
-            ){
-                throw new \Exception('Please provide username and password');
-            }
-            $user = new \Models\User();
-            try {
-                $user->login($this->request['username'], $this->request['password']);
-                return $user->get(Array('token', 'username'));
-            } catch (\Exception $e) {
-                throw $e;
-            }
-        //}else{
-            //throw new \Exception('Method only accepts POST requests');
-        //}
+        $this->is_method("POST");
+        if(
+            !array_key_exists('username', $this->request) ||
+            !array_key_exists('password', $this->request)
+        ){
+            throw new \Exception('Please provide username and password');
+        }
+        $this->User = new \Models\User();
+        $this->User->login($this->request['username'], $this->request['password']);
+
+        return $this->User->get(Array('username', 'token'));
 
     }
     protected function logout(){
+        $this->is_method('POST');
+        $this->User->logout($this->request['username'], $this->request['token']);
 
-        try{
-            $this->is_post();
-            $this->verify_user();
-            $this->User->logout($this->request['username'], $this->request['token']);
-            return $this->User->get(Array('username', 'token'));
-        }catch(\Exception $e ){
-            throw $e;
-        }
+        return $this->User->get(Array('username', 'token'));
     }
 
 } 
