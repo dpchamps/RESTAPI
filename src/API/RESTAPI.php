@@ -57,6 +57,7 @@ class REST_API extends \REST\API {
 
         return $assoc_array;
     }
+
     public function __construct($request) {
         parent::__construct($request);
         //first check the endpoint method name, read is allowed without an api key or token
@@ -66,100 +67,10 @@ class REST_API extends \REST\API {
         }
     }
 
-    private function test(){
-
-        return $this->parse_url_key_value($this->args[0]) ;
-    }
     /**
      * Endpoint methods
      */
-
-    protected function create(){
-
-    }
-
-    /**
-     * http://example.com/read/table/what/where
-     *
-     * table : table in db
-     * what : what to select from the table default : '*'
-     *          delimited by '|"
-     * where : specify values as such"
-     *      "key:value|key:value
-     *
-     */
-    protected function read(){
-
-        if(!isset($this->args[0])){
-            throw new \Exception('Need table to read from');
-        }
-        $table = $this->args[0];
-        $cols = "*";
-        if( isset($this->args[1]) ){
-            $cols = explode('|', $this->args[1]);
-        }
-        $where = NULL;
-        if( isset($this->args[2]) ){
-            $where = $this->parse_url_key_value($this->args[2]);
-        }
-
-        $db = \Models\Database::get_instance();
-
-        $test = $db->select($cols, $table, $where)->fetch_all(MYSQLI_ASSOC);
-
-        return $test;
-    }
-
-    /**
-     * https://somesite.org/update/table?search=
-     *
-     *
-     *
-     */
-    protected function update(){
-        $this->is_method('POST');
-        if( !isset($this->args[0]) ||
-            !isset($this->args[1]) ||
-            !isset($this->args[2]) )  {
-
-                throw new \Exception('Incomplete parameters for update');
-        }
-        $table = $this->args[0];
-        $col = $this->args[1];
-        $data = $this->args[2];
-        $db = \Models\Database::get_instance();
-        $db->select(
-            'id',
-            $table,
-            Array()
-
-        );
-        /*
-        if(!isset($this->args[0])){
-            throw new \Exception('Please select a table to update');
-        } elseif( !isset($this->request['data'])) {
-            throw new \Exception('Update function needs to be passed data to update');
-        }
-        //grab a db instance
-        $db = \Models\Database::get_instance();
-        $retArr = Array();
-        foreach($this->request['data'] as $key){
-
-            $val = $db->update(
-                $this->args[0],
-                $key['id'],
-                $key['data']
-            );
-            array_push($retArr, $val);
-        }
-
-        return $retArr;
-        */
-    }
-
-    protected function delete(){
-
-    }
+    
     protected function login(){
         $this->is_method("POST");
         if(
