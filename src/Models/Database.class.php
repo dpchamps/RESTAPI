@@ -40,7 +40,7 @@ class Database {
         }
     }
 
-    public function update($table, $id, $keyvalue = Array()){
+    public function update($table, $id, $keyvalue){
         if( !is_array($keyvalue) ){
             throw new \Exception('Expected type array for keyvalue, got: ' .getType($keyvalue));
         }
@@ -59,13 +59,13 @@ class Database {
             }
         }
         $mysql_statement = $update . " " . $set . " " . $where;
-        $this->query($mysql_statement);
+        return $this->query($mysql_statement);
     }
 
-    public function select($cols, $table, $vals){
+    public function select($cols, $table, $vals = Array()){
         $select = "SELECT";
         $from = " FROM $table";
-        $where = " WHERE";
+        $where = "";
 
         if( is_array($cols) ){
             $index = sizeof($cols);
@@ -81,7 +81,8 @@ class Database {
             $select .= " $cols ";
         }
 
-        if( is_array($vals) ){
+        if( isset($vals) && is_array($vals) && $vals != NULL ){
+            $where = " WHERE";
             $index = sizeof($vals);
             foreach($vals as $key => $value){
                 $where .= " $key='$value' ";
@@ -90,8 +91,8 @@ class Database {
                     $where .= " AND ";
                 }
             }
-        }else{
-            throw new \Exception('Need key value pair for setting a value');
+        }else if (isset($vals) && !is_array($vals) ){
+            throw new \Exception('Need key value pair for finding a value');
         }
 
         $sql_statement = $select . " " . $from . " " . $where;

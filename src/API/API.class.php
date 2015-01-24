@@ -55,7 +55,9 @@ abstract class API {
     }
 
     public function processAPI(){
-        if((int)method_exists($this, $this->endpoint) > 0){
+        $reflection = new \ReflectionMethod($this, $this->endpoint);
+        if((int)method_exists($this, $this->endpoint) > 0 &&
+            !$reflection->isPrivate()){
             return $this->_response($this->{$this->endpoint}($this->args));
         }
         return $this->_response("No Endpoint: $this->endpoint", 404);

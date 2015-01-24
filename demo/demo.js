@@ -5,7 +5,7 @@
 
 $('#login').on('submit', function(e){
     e.preventDefault();
-
+    console.log($(this).serialize());
     $.ajax({
         url: 'api/login',
         data : $(this).serialize(),
@@ -59,33 +59,21 @@ $("#logout").on('click', function(e){
         })
 });
 
-$("#write").on('click', function(){
+$("#update-username").on('submit', function(e){
+
+    e.preventDefault();
+
     $.ajax({
-        url: 'api/exampleUpdate',
+        url: 'api/update/testupdate',
         data: {
             username : sessionStorage['username'],
             token : sessionStorage['token'],
-            update : {
-                'a' : "something new",
-                'b' : "something blue"
-            }
+            data : $(this).serializeArray()
         },
         type: "POST"
     })
         .done(function(data){
-            console.log(JSON.stringify(data, null, "\t") );
-            /*
-            var responseString = '',
-                responseNode = $("#responseNode");
-            console.log(JSON.stringify(data, null, "\t") );
-            if(typeof data.error === 'undefined'){
-                responseString = data.username + "has logged out";
-                sessionStorage['token'] = data.token;
-            }else{
-                responseString = data.error
-            }
-
-            responseNode.html( responseString );
-            */
+            console.log(data);
         })
+
 });

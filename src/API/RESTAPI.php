@@ -2,6 +2,8 @@
 namespace REST;
 require_once 'API.class.php';
 require_once '/Models/User.class.php';
+require_once '/Models/Database.class.php';
+
 
 class REST_API extends \REST\API {
     protected $User;
@@ -38,14 +40,35 @@ class REST_API extends \REST\API {
         }
     }
 
+    /**
+     * @param $s
+     *
+     * instead of throwing an error all invalid keyvalue pairs are ignored
+     */
+    private function parse_url_key_value($s){
+        $keyvalue_strings = explode('|', $s);
+        $assoc_array = Array();
+        foreach($keyvalue_strings as $pair){
+            $pair = explode(':', $pair);
+            if(sizeof($pair) > 1){
+                $assoc_array[$pair[0]] = $pair[1];
+            }
+        }
+
+        return $assoc_array;
+    }
     public function __construct($request) {
         parent::__construct($request);
-
         //first check the endpoint method name, read is allowed without an api key or token
-        if($this->endpoint == 'read' || $this->endpoint == 'login' ){
+        if($this->endpoint == 'read' || $this->endpoint == 'login'|| $this->endpoint == 'test' || $this->endpoint == 'read' ){
         } else {
             $this->verify_user();
         }
+    }
+
+    private function test(){
+
+        return $this->parse_url_key_value($this->args[0]) ;
     }
     /**
      * Endpoint methods
@@ -55,42 +78,83 @@ class REST_API extends \REST\API {
 
     }
 
+    /**
+     * http://example.com/read/table/what/where
+     *
+     * table : table in db
+     * what : what to select from the table default : '*'
+     *          delimited by '|"
+     * where : specify values as such"
+     *      "key:value|key:value
+     *
+     */
     protected function read(){
-        //connect to db
-        $content = Null;
-        $item = Null;
-        $result = '';
 
-        if(isset($this->args[0])){
-            $content = $this->args[0];
+        if(!isset($this->args[0])){
+            throw new \Exception('Need table to read from');
         }
-        if(isset($this->args[1])){
-            $item = $this->args[1];
+        $table = $this->args[0];
+        $cols = "*";
+        if( isset($this->args[1]) ){
+            $cols = explode('|', $this->args[1]);
         }
-
-        if($content != Null){
-            $result = ''; //read_from_database(content, item);
-        } else {
-            throw new \Exception("Content not specified");
+        $where = NULL;
+        if( isset($this->args[2]) ){
+            $where = $this->parse_url_key_value($this->args[2]);
         }
 
-        return $result;
+        $db = \Models\Database::get_instance();
+
+        $test = $db->select($cols, $table, $where)->fetch_all(MYSQLI_ASSOC);
+
+        return $test;
     }
-    protected function exampleUpdate(){
-        $this->is_method('POST');
-        $some_dummy_write = Array();
-        if(is_array($this->request['update'])){
-            foreach($this->request['update'] as $key => $value){
-                $some_dummy_write[$key] = $value;
-            }
-        }
 
-        return Array(
-            'response' => $some_dummy_write
-        );
-    }
+    /**
+     * https://somesite.org/update/table?search=
+     *
+     *
+     *
+     */
     protected function update(){
+        $this->is_method('POST');
+        if( !isset($this->args[0]) ||
+            !isset($this->args[1]) ||
+            !isset($this->args[2]) )  {
 
+                throw new \Exception('Incomplete parameters for update');
+        }
+        $table = $this->args[0];
+        $col = $this->args[1];
+        $data = $this->args[2];
+        $db = \Models\Database::get_instance();
+        $db->select(
+            'id',
+            $table,
+            Array()
+
+        );
+        /*
+        if(!isset($this->args[0])){
+            throw new \Exception('Please select a table to update');
+        } elseif( !isset($this->request['data'])) {
+            throw new \Exception('Update function needs to be passed data to update');
+        }
+        //grab a db instance
+        $db = \Models\Database::get_instance();
+        $retArr = Array();
+        foreach($this->request['data'] as $key){
+
+            $val = $db->update(
+                $this->args[0],
+                $key['id'],
+                $key['data']
+            );
+            array_push($retArr, $val);
+        }
+
+        return $retArr;
+        */
     }
 
     protected function delete(){
