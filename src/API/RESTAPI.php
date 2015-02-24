@@ -121,7 +121,14 @@ class REST_API extends \REST\API {
             $vals = $this->parse_url_key_value($this->args[2]);
         }
 
-        return $this->get($table, $cols, $vals)->fetch_all(MYSQLI_ASSOC);
+        //return $this->get($table, $cols, $vals)->fetch_all(MYSQLI_ASSOC);
+        $result = $this->get($table, $cols, $vals);
+        if($result === false){
+            throw new \Exception("Content Not Found");
+        }else{
+            return $result->fetch_all(MYSQLI_ASSOC);
+        }
+
     }
 
 
