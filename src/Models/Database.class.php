@@ -77,6 +77,8 @@ class Database {
                    $select .= ',';
                 }
             }
+        } else if($cols == "" || $cols == NULL){
+            $select .= " *";
         } else {
             $select .= " $cols ";
         }
@@ -96,6 +98,7 @@ class Database {
         }
 
         $sql_statement = $select . " " . $from . " " . $where;
+        echo $sql_statement;
         return $this->query($sql_statement);
     }
 

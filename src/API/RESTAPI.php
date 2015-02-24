@@ -57,16 +57,29 @@ class REST_API extends \REST\API {
 
         return $assoc_array;
     }
+    private function parse_url_array($s){
+        return explode('|', $s);
+    }
 
     public function __construct($request) {
         parent::__construct($request);
         //first check the endpoint method name, read is allowed without an api key or token
-        if($this->endpoint == 'read' || $this->endpoint == 'login'|| $this->endpoint == 'test' || $this->endpoint == 'read' ){
+        if($this->endpoint == 'get_content' || $this->endpoint == 'login'|| $this->endpoint == 'test' || $this->endpoint == 'read' ){
         } else {
             $this->verify_user();
         }
     }
+    /*
+     * A general gdet method for querying a database and getting content back.
+     *
+     *  Write an endpoint method that makes use of this
+     *
+     */
+    private function get($table, $cols, $vals){
+        //$this->is_method('GET');
 
+        return \Models\Database::get_instance()->select($cols, $table, $vals);
+    }
     /**
      * Endpoint methods
      */
@@ -93,10 +106,23 @@ class REST_API extends \REST\API {
     }
 
     protected function get_content(){
-        $this->is_method('GET');
-        $table = 'content';
+        $table = "";
+        $cols  = "";
+        $vals  = NULL;
+        if(isset($this->args[0])){
+            $table = $this->args[0];
+        }else{
+            throw new \Exception('No content specified');
+        }
+        if(isset($this->args[1])){
+            $cols = $this->parse_url_array($this->args[1]);
+        }
+        if(isset($this->args[2])){
+            $vals = $this->parse_url_key_value($this->args[2]);
+        }
 
-
+        return $this->get($table, $cols, $vals)->fetch_all(MYSQLI_ASSOC);
     }
+
 
 } 

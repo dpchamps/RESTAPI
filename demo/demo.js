@@ -58,7 +58,7 @@ $("#logout").on('click', function(e){
             responseNode.html( responseString );
         })
 });
-
+/*
 $("#update-username").on('submit', function(e){
 
     e.preventDefault();
@@ -77,3 +77,4 @@ $("#update-username").on('submit', function(e){
         })
 
 });
+*/
