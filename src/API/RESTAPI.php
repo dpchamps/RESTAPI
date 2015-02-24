@@ -92,4 +92,11 @@ class REST_API extends \REST\API {
         return $this->User->get(Array('username', 'token'));
     }
 
+    protected function get_content(){
+        $this->is_method('GET');
+        $table = 'content';
+
+
+    }
+
 } 
