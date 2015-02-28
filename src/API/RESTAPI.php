@@ -7,7 +7,10 @@ require_once '/Models/Database.class.php';
 
 class REST_API extends \REST\API {
     protected $User;
-
+    protected $Unverified_Endpoints = Array(
+        "login",
+        "get_content"
+    );
     private function verify_user() {
 
         $User = new \Models\User();
@@ -64,8 +67,10 @@ class REST_API extends \REST\API {
     public function __construct($request) {
         parent::__construct($request);
         //first check the endpoint method name, read is allowed without an api key or token
-        if($this->endpoint == 'get_content' || $this->endpoint == 'login'|| $this->endpoint == 'test' || $this->endpoint == 'read' ){
-        } else {
+
+        if(in_array($this->endpoint, $this->Unverified_Endpoints)){
+            //can add security measures here to ensure someone isn't spamming the system
+        }else{
             $this->verify_user();
         }
     }
