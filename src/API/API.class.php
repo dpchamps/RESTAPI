@@ -1,6 +1,6 @@
 <?php
-namespace REST;
-require_once '/../config.php';
+
+require_once __DIR__.'./../config.php';
 abstract class API {
     protected $method = '';
     
@@ -14,7 +14,7 @@ abstract class API {
     
     public function __construct($request){
         //check the config file to see if CORS is enabled
-        if(\config\ALLOW_CORS){
+        if(ALLOW_CORS){
             header("Access-Control-Allow-Origin: *");
             header("Access-Control-Allow-Methods: *");
         }
@@ -24,7 +24,6 @@ abstract class API {
         $this->endpoint = array_shift($this->args);
 
         //let's cut the verb out for now
-
         $this->method = $_SERVER['REQUEST_METHOD'];
         if ($this->method == 'POST' && array_key_exists('HTTP_X_HTTP_METHOD', $_SERVER)) {
             if($_SERVER['HTTP_X_HTTP_METHOD'] == 'DELETE'){
@@ -32,14 +31,20 @@ abstract class API {
             } else if($_SERVER['HTTP_X_HTTP_METHOD'] == 'PUT'){
                 $this->method = 'PUT';
             } else {
-                throw new \Exception('Unexpected Header');
+                throw new Exception('Unexpected Header');
             }
         }
 
         switch($this->method) {
             case 'DELETE':
             case 'POST':
-                $this->request = $this->_cleanInputs($_POST);
+                if(isset($_SERVER['CONTENT_TYPE'])){
+                    $data = $this->_contentType($_SERVER['CONTENT_TYPE']);
+                }else{
+                    $data = $_POST;
+                }
+
+                $this->request = $this->_cleanInputs($data);
                 break;
             case 'GET':
                 $this->request = $this->_cleanInputs($_GET);
@@ -55,12 +60,33 @@ abstract class API {
     }
 
     public function processAPI(){
-        $reflection = new \ReflectionMethod($this, $this->endpoint);
+        $reflection = new ReflectionMethod($this, $this->endpoint);
         if((int)method_exists($this, $this->endpoint) > 0 &&
             !$reflection->isPrivate()){
             return $this->_response($this->{$this->endpoint}($this->args));
         }
         return $this->_response("No Endpoint: $this->endpoint", 404);
+    }
+    private function _contentType($header){
+        $header = explode(';', $header);
+        $header = $header[0];
+        $response = "";
+        switch($header){
+            case "multipart/form-data":
+            case "application/x-www-form-urlencoded":
+                $response = $_POST;
+                break;
+            case "text/plain":
+            case "application/json":
+                $response = json_decode(file_get_contents("php://input"), true);
+                break;
+
+            default:
+                throw new Exception("Unsupported mime type: $header");
+                break;
+        }
+
+        return $response;
     }
 
     private function _response($data, $status = 200){

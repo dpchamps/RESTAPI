@@ -6,10 +6,10 @@
  * Time: 4:28 PM
  */
 
-namespace Models;
+
 require_once 'Auth.class.php';
 
-class User extends \Models\Auth{
+class User extends Auth{
 
     private $_token;
     private $_username;
@@ -26,12 +26,13 @@ class User extends \Models\Auth{
                 'password' => MD5($password)
             )
         );
-        $this->_id = $query->fetch_assoc()['id'];
+        $this->_id = $query->fetch_assoc();
+        $this->_id = $this->_id['id'];
 
         if($query->num_rows == 1){
             //check if the user is logged in
             if( !$this->is_inactive($this->_id) ){
-                throw new \Exception('User has already logged in');
+                throw new Exception('User has already logged in');
             }
             //user successfully logged in
 
@@ -49,7 +50,7 @@ class User extends \Models\Auth{
             $this->_username = $username;
             $this->_logged_in = true;
         }else{
-            throw new \Exception('Username or Password incorrect');
+            throw new Exception('Username or Password incorrect');
         }
     }
     public function __construct(){
@@ -63,7 +64,8 @@ class User extends \Models\Auth{
             Array('token' => $token, 'username' => $username)
         );
 
-        $this->_id = $uid->fetch_assoc()['id'];
+        $this->_id = $uid->fetch_assoc();
+        $this->_id = $this->_id['id'];
         //make sure the query returned one result and the token is still valid
         //  if it is valid set class variables
         if($uid->num_rows == 1 &&
@@ -74,13 +76,16 @@ class User extends \Models\Auth{
             $this->_username = $username;
             $this->_token = $token;
         }
-
+        //upon successful request, update the timestamp
+        if($valid_token){
+            $this->update_timestamp();
+        }
         return $valid_token;
     }
     public function logout($username, $token){
         //if the username / token pair is not valid then nothing else needs to happen
         if(!$this->valid_token($token, $username)){
-            throw new \Exception('User session does not exist');
+            throw new Exception('User session does not exist');
         }
 
         $this->_db->update(
@@ -90,8 +95,6 @@ class User extends \Models\Auth{
         );
 
         $this->_token = NULL;
-
-
     }
     public function get($what = ''){
         $user_attribs = get_object_vars($this);

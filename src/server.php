@@ -19,46 +19,9 @@ if (!array_key_exists('HTTP_ORIGIN', $_SERVER)) {
 }
 
 try {
-    $API = new \REST\REST_API($_REQUEST['request']);
+    $API = new REST_API($_REQUEST['request']);
     echo $API->processAPI();
-    /*
-    $db = \Models\Database::get_instance();
 
-    $query = $db->select(
-        Array(
-
-            'username' => 'username',
-
-        ), 'users',
-        Array(
-            'token' => 'wcdT54iN0rPeMFtoZlWeJuRonQvj0ttK'
-        ));
-
-   echo $query->fetch_assoc()['username'];
-*/
-    //$login = new \Models\Auth('test', 'test');
-    //$login->check_login('test', 'test');
-
-    /*
-    $query = $db->select(
-        Array(
-            'id' => 'id',
-            'username' => 'username',
-            'token' => 'token',
-            'token_timestamp' => 'token_timestamp'
-        ),
-        'users',
-        Array(
-            'username' => 'test',
-
-        )
-    )->fetch_assoc();
-    foreach($query as $key => $value){
-        echo "\n $key  :  $value";
-    }
-*/
-    //$db = \Models\Database::get_instance();
-    //$db->get_connection();
 } catch (Exception $e){
     echo json_encode( Array('error' => $e->getMessage() ));
 }

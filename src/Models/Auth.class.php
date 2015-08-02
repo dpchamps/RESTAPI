@@ -1,7 +1,7 @@
 <?php
 
 
-namespace Models;
+
 require_once 'Database.class.php';
 require_once 'Token.class.php';
 
@@ -24,7 +24,8 @@ class Auth {
      * generates an auth token of 32 chars in length
      */
     private function generate_token(){
-        $token = new \Models\Token(32);
+        $token = new
+        Token(32);
         return $token;
     }
     private function generate_timestamp(){
@@ -37,8 +38,7 @@ class Auth {
         );
     }
     private function connect_to_db(){
-        $this->_db = \Models\Database::get_instance();
-        $this->_connection = $this->_db->get_connection();
+
     }
 
     /**
@@ -50,7 +50,8 @@ class Auth {
             'token_timestamp',
             'users',
             Array( 'id' => $id)
-        )->fetch_assoc()['token_timestamp'];
+        )->fetch_assoc();
+        $timestamp = $timestamp['token_timestamp'];
 
         $t = strtotime('now') - strtotime($timestamp);
 
@@ -78,9 +79,10 @@ class Auth {
 
 
     public function __construct(){
-        $this->connect_to_db();
+        $this->_db = Database::get_instance();
+        $this->_connection = $this->_db->get_connection();
         if($this->_connection == Null){
-            throw new \Exception('No connection to database');
+            throw new Exception('No connection to database');
         }
     }
 

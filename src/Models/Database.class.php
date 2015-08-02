@@ -6,8 +6,8 @@
  * Time: 2:35 PM
  */
 
-namespace Models;
-require_once('/../config.php');
+
+require_once(__DIR__ . '/../config.php');
 
 /**
  * Class Database
@@ -34,15 +34,17 @@ class Database {
      * Constructor
      */
     public function __construct(){
-        $this->_connection = new \mysqli(\config\DB_HOSTNAME, \config\DB_USERNAME, \config\DB_PASSWORD, \config\DB_DATABASE);
+        $this->_connection = new mysqli(DB_HOSTNAME, DB_USERNAME, DB_PASSWORD, DB_DATABASE);
+        $this->_connection->set_charset(DB_CHARSET);
+
         if(mysqli_connect_error()){
-            throw new \Exception('Failed to connect to MySql: ' . mysqli_connect_error(), E_USER_ERROR);
+            throw new Exception('Failed to connect to MySql: ' . mysqli_connect_error(), E_USER_ERROR);
         }
     }
 
     public function update($table, $id, $keyvalue){
         if( !is_array($keyvalue) ){
-            throw new \Exception('Expected type array for keyvalue, got: ' .getType($keyvalue));
+            throw new Exception('Expected type array for keyvalue, got: ' .getType($keyvalue));
         }
         $update = "UPDATE $table";
         $set = "SET";
@@ -64,6 +66,9 @@ class Database {
 
     public function select($cols, $table, $vals = Array()){
         $select = "SELECT";
+        if(is_array($table)){
+            $table = implode(',', $table);
+        }
         $from = " FROM $table";
         $where = "";
 
@@ -94,19 +99,45 @@ class Database {
                 }
             }
         }else if (isset($vals) && !is_array($vals) ){
-            throw new \Exception('Need key value pair for finding a value');
+            throw new Exception('Need key value pair for finding a value');
         }
 
         $sql_statement = $select . " " . $from . " " . $where;
 
         return $this->query($sql_statement);
     }
+    /*
+     * returns a the first value of the query,
+     * useful for specific queries where one item is expected
+     */
+    public function select_single_item($col, $table, $clause=Array()){
+        $result = $this->select($col, $table, $clause);
+        $result = $this->fetch_all($result);
+        $result = $result[0];
 
+        return $result[$col];
+
+    }
+    public function fetch_all($result){
+        if(!method_exists($result, 'fetch_all')){
+            $data = Array();
+            $i = 0;
+            while ($row = $result->fetch_assoc()) {
+                $data[$i] = $row;
+                $i = $i+1;
+            }
+        }else{
+            $data = $result->fetch_all(MYSQLI_ASSOC);
+        }
+
+        return $data;
+    }
+    public function fetch_all_query($query){
+        return $this->fetch_all($this->query($query));
+    }
     public function query($sql_statement){
         $q = $this->_connection->query($sql_statement);
-
         return $q;
-
     }
     /**
      * Empty clone magic method to prevent a duplicate connection
