@@ -5,9 +5,9 @@ abstract class API {
     protected $method = '';
     
     protected $endpoint = '';
-    
+
     protected $verb = '';
-    
+
     protected $args = Array();
     
     protected $file = Null;
