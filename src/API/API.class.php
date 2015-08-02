@@ -6,12 +6,10 @@ abstract class API {
     
     protected $endpoint = '';
 
-    protected $verb = '';
-
     protected $args = Array();
     
     protected $file = Null;
-    
+
     public function __construct($request){
         //check the config file to see if CORS is enabled
         if(ALLOW_CORS){
@@ -23,7 +21,6 @@ abstract class API {
         $this->args = explode('/', rtrim($request, '/'));
         $this->endpoint = array_shift($this->args);
 
-        //let's cut the verb out for now
         $this->method = $_SERVER['REQUEST_METHOD'];
         if ($this->method == 'POST' && array_key_exists('HTTP_X_HTTP_METHOD', $_SERVER)) {
             if($_SERVER['HTTP_X_HTTP_METHOD'] == 'DELETE'){
