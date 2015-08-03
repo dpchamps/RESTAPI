@@ -16,7 +16,7 @@ class REST_API extends API
     private $cms;
     private $util;
 
-   
+
     private function verify_user()
     {
         $User = new User();
