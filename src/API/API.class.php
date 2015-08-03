@@ -33,6 +33,9 @@ abstract class API {
         }
 
         switch($this->method) {
+            case 'OPTIONS':
+                //does anything need to go here?
+                break;
             case 'DELETE':
             case 'POST':
                 if(isset($_SERVER['CONTENT_TYPE'])){
@@ -40,7 +43,6 @@ abstract class API {
                 }else{
                     $data = $_POST;
                 }
-
                 $this->request = $this->_cleanInputs($data);
                 break;
             case 'GET':

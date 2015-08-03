@@ -15,23 +15,8 @@ class REST_API extends API
     private $sql;
     private $cms;
     private $util;
-    protected $Unverified_Endpoints = Array(
-        "login",
-        'check_login',
-        "get_content",
-        "get_menu",
-        "get_press",
-        "get_page",
-        "get_merch",
-        "test"
-    );
-    public function test(){
-        $sql_query = $this->sql->get('menu', 1);
 
-        $raw_array = $this->db->fetch_all_query($sql_query);
-
-        return $this->lists->order_menu_cms($raw_array);
-    }
+   
     private function verify_user()
     {
         $User = new User();
