@@ -28,7 +28,7 @@ abstract class API {
             } else if($_SERVER['HTTP_X_HTTP_METHOD'] == 'PUT'){
                 $this->method = 'PUT';
             } else {
-                throw new Exception('Unexpected Header');
+                throw new Exception(406);
             }
         }
 
@@ -53,7 +53,7 @@ abstract class API {
                 $this->file = file_get_contents("php://input");
                 break;
             default:
-                $this->_response('Invalid Method', 405);
+                throw new Exception(405);
                 break;
         }
     }
@@ -62,12 +62,14 @@ abstract class API {
         if($this->endpoint === ''){
             $this->endpoint = 'API';
         }
+
         $reflection = new ReflectionMethod($this, $this->endpoint);
         if((int)method_exists($this, $this->endpoint) > 0 &&
             !$reflection->isPrivate()){
             return $this->_response($this->{$this->endpoint}($this->args));
+        }else{
+            throw new Exception(404);
         }
-        return $this->_response("No Endpoint: $this->endpoint", 404);
     }
     private function _contentType($header){
         $header = explode(';', $header);

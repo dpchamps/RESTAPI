@@ -34,11 +34,11 @@ class REST_API extends API
             array_key_exists('username', $this->request) &&
             !$User->valid_token($this->request['token'], $this->request['username'])
         ) {
-            throw new Exception('Invalid User Token');
+            throw new Exception(401);
         } elseif (!array_key_exists('token', $this->request) ||
             !array_key_exists('username', $this->request)
         ) {
-            throw new Exception('Please log in to complete this action');
+            throw new Exception(401);
         }
 
         $this->User = $User;
@@ -76,7 +76,7 @@ class REST_API extends API
             !array_key_exists('username', $this->request) ||
             !array_key_exists('password', $this->request)
         ) {
-            throw new Exception('Please provide username and password');
+            throw new Exception(401);
         }
         $this->User = new User();
         $this->User->login($this->request['username'], $this->request['password']);
@@ -156,6 +156,7 @@ class REST_API extends API
                 $response = $this->get_press($item);
                 break;
             default:
+                throw new Exception(404);
                 break;
         }
 
@@ -171,7 +172,7 @@ class REST_API extends API
                 if($this->utils->check($available_menus[$item-1])){
                     return $available_menus[$item-1];
                 }else{
-                    //404
+                    throw new Exception(404);
                 }
             }else{
                 return $available_menus;
@@ -196,7 +197,7 @@ class REST_API extends API
         return $raw_array;
         //return $this->lists->order_menu_array($raw_array);
     }
-    function get_merch($item)
+    public function get_merch($item)
     {
         $response = NULL;
         //select all merch titles from db
@@ -233,7 +234,7 @@ class REST_API extends API
         if (isset($this->args[0])) {
             $table = $this->util->parse_url_array($this->args[0]);
         } else {
-            throw new Exception('No content specified');
+            throw new Exception(412);
         }
         if (isset($this->args[1])) {
             $cols = $this->util->parse_url_array($this->args[1]);
@@ -244,7 +245,7 @@ class REST_API extends API
 
         $result = $this->db->select($cols, $table, $vals);
         if ($result === false) {
-            throw new Exception("Content Not Found");
+            throw new Exception(404);
         } else {
             return $this->db->fetch_all($result);
         }
@@ -259,13 +260,13 @@ class REST_API extends API
         $page_id = $this->db->select_single_item('id', 'page_data', Array('title'=>$page));
 
         if (!$page_id) {
-            throw new Exception("Page Not Found");
+            throw new Exception(404);
         }
         $page_query = $this->sql->get('page', $page_id);
         $page_data = $this->db->fetch_all_query($page_query);
 
         if (!$page_data) {
-            throw new Exception('Page Not Found');
+            throw new Exception(404);
         } else {
             return $page_data[0];
         }
@@ -295,7 +296,7 @@ class REST_API extends API
                 if ($this->util->check($response[$press_type]) ){
                     $response = $response[$press_type]
 ;               }else{
-                    //404
+                    throw new Exception(404);
                 }
             }
         }
