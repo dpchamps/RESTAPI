@@ -59,6 +59,9 @@ abstract class API {
     }
 
     public function processAPI(){
+        if($this->endpoint === ''){
+            $this->endpoint = 'API';
+        }
         $reflection = new ReflectionMethod($this, $this->endpoint);
         if((int)method_exists($this, $this->endpoint) > 0 &&
             !$reflection->isPrivate()){

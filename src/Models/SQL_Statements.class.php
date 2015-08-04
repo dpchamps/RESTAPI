@@ -100,7 +100,12 @@ class SQL_Statements {
             from page_data
             where id = $page_id";
     }
-
+    private function available_pages(){
+        return "SELECT title FROM page_data";
+    }
+    private function available_menus(){
+        return "SELECT type FROM menu_type";
+    }
     public function get($name, $id ="", $sub_type=""){
         $query = "";
         switch($name){
@@ -126,7 +131,12 @@ class SQL_Statements {
             case('page'):
                 $query = $this->page_query($id);
                 break;
-
+            case('available_pages'):
+                $query = $this->available_pages();
+                break;
+            case('available_menus'):
+                $query = $this->available_menus();
+                break;
         }
 
         return $query;

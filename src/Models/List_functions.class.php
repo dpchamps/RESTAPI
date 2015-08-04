@@ -17,24 +17,13 @@ class List_functions {
         $this->db->update($table_name, $id_1, Array('list_order' => $lo_2));
         $this->db->update($table_name, $id_2, Array('list_order' => $lo_1));
     }
-    /*
-     * Order menu items for display on the site.
-     *
-     * Rules: if the list_order has been set to zero, the item is not included
-     */
-    public function order_menu_array($raw_array){
-        $return_array = Array();
 
-        foreach($raw_array as $idx => $item){
-            $header = $item['header'];
-            $item_id = (int)$item['list_order']-1;
-            if(!array_key_exists($header, $return_array)){
-                $return_array[$header] = Array();
-            }
-
-            $section = &$return_array[$header];
-            if(array_key_exists($item_id, $section)){
-                array_push($section[$item_id]['descriptions'], Array(
+    public function build_menu($arr){
+        $unique_array = Array();
+        foreach($arr as $idx => $item){
+            $id = (int)$item['id']-1;
+            if (array_key_exists($id, $unique_array) ){
+                array_push($unique_array[$id]['descriptions'], Array(
                     'text' => $item['description'],
                     'id' => $item['desc_id'],
                     'price' => $item['subprice']
@@ -43,7 +32,7 @@ class List_functions {
                 if((int)$item['list_order'] === 0){
                     continue;
                 }
-                $section[(int)$item_id] = Array(
+                $unique_array[(int)$id] = Array(
                     'title' => $item['title'],
                     'descriptions' => Array(
                         Array(
@@ -52,15 +41,24 @@ class List_functions {
                             'price' => $item['subprice']
                         )
                     ),
-                    'price' => $item['price']
+                    'price' => $item['price'],
+                    'header' => $item['header'],
+                    'list_order' => $item['list_order'],
+                    'id' => $item['id']
                 );
             }
-
-
         }
+        return $unique_array;
+    }
+    public function build_merch($arr){
+        $return_array = Array(
+            'header' => $arr[0]['header'],
+            'description' => $arr[0]['description'],
+            'images' => $arr['images']
+        );
+
         return $return_array;
     }
-
     public function order_menu_cms($raw_array){
         $return_array = Array();
         $group_array = Array();

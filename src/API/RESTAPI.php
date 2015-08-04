@@ -15,16 +15,7 @@ class REST_API extends API
     private $sql;
     private $cms;
     private $util;
-    protected $Unverified_Endpoints = Array(
-        "login",
-        'check_login',
-        "get_content",
-        "get_menu",
-        "get_press",
-        "get_page",
-        "get_merch",
-        "test"
-    );
+
     public function test(){
         $sql_query = $this->sql->get('menu', 1);
 
@@ -52,7 +43,10 @@ class REST_API extends API
 
         $this->User = $User;
     }
-
+    private function allowed_methods($string){
+        $methods = explode(" ", $string);
+        return true;
+    }
     public function __construct($request)
     {
         parent::__construct($request);
@@ -61,17 +55,20 @@ class REST_API extends API
         $this->sql = new SQL_Statements();
         $this->cms = new Cms();
         $this->util = new Utilities();
-        //first check the endpoint method name, read is allowed without an api key or token
-        if (in_array($this->endpoint, $this->Unverified_Endpoints)) {
-            //can add security measures here to ensure someone isn't spamming the system
-        } else {
-            $this->verify_user();
-        }
     }
     /**
      * Endpoint methods
      */
-
+    protected function API()
+    {
+        return Array(
+            'version' => '',
+            'site' => '',
+            'links' => Array(
+                'ref' => 'pages'
+            )
+        );
+    }
     protected function login()
     {
         $this->util->is_method($this->method, "POST");
@@ -117,6 +114,117 @@ class REST_API extends API
         return $this->User->get(Array('username', 'token'));
     }
 
+    /*
+     * url structure:
+     *
+     *  /pages
+     *      returns array of pages that exist
+     *  _____________________
+     *  /pages/menus
+     *      returns an array of menus that exist
+     * -or-
+     *  /pages/merch
+     *      returns an relation of links / items
+     *  _____________________
+     *  /pages/menus/food?item=1
+     *      returns item with the id of 1
+     * -or-
+     *  /pages/merch?item=1
+     *      returns an item with the id of 1
+     * -or-
+     * /pages/menus?item=1
+     *      returns the menu with the id of 1
+     */
+    protected function pages(){
+        //deal with options first
+        $this->allowed_methods('GET');
+        $page = $this->util->check($this->args[0]);
+        $response = null;
+        $item = $this->util->check($this->request['item']);
+
+        switch($page){
+            case(false):
+                $response =  $this->db->fetch_all_query( $this->sql->get('available_pages') );
+                break;
+            case('menus'):
+                $response = $this->get_menu((int)$item);
+                break;
+            case('merch'):
+                $response = $this->get_merch($item);
+                break;
+            case('press'):
+                $response = $this->get_press($item);
+                break;
+            default:
+                break;
+        }
+
+        return $response;
+    }
+    protected function get_menu($item)
+    {
+        array_shift($this->args);
+        if (!isset($this->args[0])) {
+            $sql =  $this->sql->get('available_menus');
+            $available_menus = $this->db->fetch_all_query($sql);
+            if($item){
+                if($this->utils->check($available_menus[$item-1])){
+                    return $available_menus[$item-1];
+                }else{
+                    //404
+                }
+            }else{
+                return $available_menus;
+            }
+        }
+        $menu_type = $this->db->select('id', 'menu_type', Array(
+            'type' => $this->args[0]
+        ));
+        if ($menu_type !== false) {
+            $menu_type = $menu_type->fetch_assoc();
+            $menu_type = $menu_type['id'];
+        }
+
+        $sql_query = $this->sql->get('menu', $menu_type);
+        $raw_array = $this->db->fetch_all_query($sql_query);
+        $raw_array = $this->lists->build_menu($raw_array);
+        if( $item && $this->util->check( $raw_array[$item-1] ) ){
+            return $raw_array[$item-1];
+        }else{
+            //404
+        }
+        return $raw_array;
+        //return $this->lists->order_menu_array($raw_array);
+    }
+    function get_merch($item)
+    {
+        $response = NULL;
+        //select all merch titles from db
+        $types = Database::get_instance()->select('title', 'merch_items', Array());
+        $types = Database::get_instance()->fetch_all($types);
+
+        if ($this->util->check($item)) {
+            $item_id = $this->db->select_single_item('id', 'merch_items', Array('title' => $item));
+            if ($item_id) {
+                $text_query = $this->sql->get('merch', $item_id, 'text');
+                $image_query = $this->sql->get('merch', $item_id, 'image');
+                $response = $this->db->fetch_all_query($text_query);
+                $response['images'] = $this->db->fetch_all_query($image_query);
+                $response = $this->lists->build_merch($response);
+            }
+        } else {
+            $response = $types;
+        }
+        return $response;
+    }
+    /*
+     * url structure:
+     *
+     * /items
+     *      returns an object of item types, i.e. {'type' : 'menu', type: 'merch' ...}
+     *
+     *
+     */
     protected function get_content()
     {
         $table = "";
@@ -143,25 +251,7 @@ class REST_API extends API
 
     }
 
-    protected function get_menu()
-    {
 
-        if (!isset($this->args[0])) {
-            throw new Exception('Please specify content');
-        }
-        $menu_type = $this->db->select('id', 'menu_type', Array(
-            'type' => $this->args[0]
-        ));
-        if ($menu_type !== false) {
-            $menu_type = $menu_type->fetch_assoc();
-            $menu_type = $menu_type['id'];
-        }
-
-        $sql_query = $this->sql->get('menu', $menu_type);
-        $raw_array = $this->db->fetch_all_query($sql_query);
-
-        return $this->lists->order_menu_array($raw_array);
-    }
 
     protected function get_page()
     {
@@ -181,46 +271,39 @@ class REST_API extends API
         }
     }
 
-    protected function get_press()
+    protected function get_press($item)
     {
         $response = NULL;
-        if (isset($this->args[0])) {
-            $clause = $this->args[0];
-            $item_id = $this->db->select_single_item('id', 'press_items', Array('title'=>$clause));
-            if ($item_id) {
-                $text_query = $this->sql->get('press', $item_id, 'text');
-                $image_query = $this->sql->get('press', $item_id, 'image');
-                $response = $this->db->fetch_all_query($text_query);
-                $response['images'] = $this->db->fetch_all_query($image_query);
+        array_shift($this->args);
+        if( !$this->util->check( $this->args[0] ) ){
+            $response = $this->db->fetch_all_query("SELECT type FROM press_type");
+        }else{
+            $press_type = $this->args[0];
+            if ( isset($item) ){
+                $clause = $item;
+                $item_id = $this->db->select_single_item('id', 'press_items', Array('title'=>$clause));
+                if ($item_id) {
+                    $text_query = $this->sql->get('press', $item_id, 'text');
+                    $image_query = $this->sql->get('press', $item_id, 'image');
+                    $response = $this->db->fetch_all_query($text_query);
+                    $response['images'] = $this->db->fetch_all_query($image_query);
+                }
+            } else {
+                $query = $this->sql->get('press');
+                $data = $this->db->fetch_all_query($query);
+                $response = $this->lists->order_press($data);
+                if ($this->util->check($response[$press_type]) ){
+                    $response = $response[$press_type]
+;               }else{
+                    //404
+                }
             }
-        } else {
-            $query = $this->sql->get('press');
-            $data = $this->db->fetch_all_query($query);
-            $response = $this->lists->order_press($data);
         }
+
         return $response;
     }
 
-    function get_merch()
-    {
-        $response = NULL;
 
-        if (isset($this->args[0])) {
-            $clause = $this->args[0];
-
-            $item_id = $this->db->select_single_item('id', 'merch_items', Array('title' => $clause));
-            if ($item_id) {
-                $text_query = $this->sql->get('merch', $item_id, 'text');
-                $image_query = $this->sql->get('merch', $item_id, 'image');
-                $response = $this->db->fetch_all_query($text_query);
-                $response['images'] = $this->db->fetch_all_query($image_query);
-            }
-        } else {
-            $response = Database::get_instance()->select('title', 'merch_items', Array());
-            $response = Database::get_instance()->fetch_all($response);
-        }
-        return $response;
-    }
 
     protected function cms()
     {
