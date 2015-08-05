@@ -16,13 +16,6 @@ class REST_API extends API
     private $cms;
     private $util;
 
-    public function test(){
-        $sql_query = $this->sql->get('menu', 1);
-
-        $raw_array = $this->db->fetch_all_query($sql_query);
-
-        return $this->lists->order_menu_cms($raw_array);
-    }
     private function verify_user()
     {
         $User = new User();
@@ -65,7 +58,10 @@ class REST_API extends API
             'version' => '',
             'site' => '',
             'links' => Array(
-                'ref' => 'pages'
+                'pages' => Array(
+                    'ref' => SERVER_ROOT.'/pages',
+                    'description' => "Retrieve page data."
+                )
             )
         );
     }
