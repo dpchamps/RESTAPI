@@ -21,7 +21,7 @@ class List_functions {
     public function build_menu($arr){
         $unique_array = Array();
         foreach($arr as $idx => $item){
-            $id = (int)$item['id']-1;
+            $id = (int)$item['id'];
             if (array_key_exists($id, $unique_array) ){
                 array_push($unique_array[$id]['descriptions'], Array(
                     'text' => $item['description'],
