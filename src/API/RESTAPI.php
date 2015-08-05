@@ -46,6 +46,11 @@ class REST_API extends API
             throw new Exception(405);
         }
     }
+    private function check_auth_session(){
+        $user = $_SERVER['PHP_AUTH_USER'];
+        $pw = $_SERVER['PHP_AUTH_PW'];
+        return $this->User->valid_token($pw, $user);
+    }
     public function __construct($request)
     {
         parent::__construct($request);
@@ -54,10 +59,13 @@ class REST_API extends API
         $this->sql = new SQL_Statements();
         $this->cms = new Cms();
         $this->util = new Utilities();
+        $this->User = new User();
+
     }
     /**
      * Endpoint methods
      */
+
     protected function API()
     {
         return Array(
@@ -73,18 +81,15 @@ class REST_API extends API
     }
     protected function login()
     {
-        $this->util->is_method($this->method, "POST");
-        if (
-            !array_key_exists('username', $this->request) ||
-            !array_key_exists('password', $this->request)
-        ) {
+        $this->allowed_methods('GET');
+        $user = $_SERVER['PHP_AUTH_USER'];
+        $pw = $_SERVER['PHP_AUTH_PW'];
+        if(!$user || !$pw){
             throw new Exception(401);
         }
         $this->User = new User();
-        $this->User->login($this->request['username'], $this->request['password']);
-
-        return $this->User->get(Array('username', 'token'));
-
+        $this->User->login($user, $pw);
+        return $this->User->token;
     }
 
     protected function check_login()
@@ -109,11 +114,12 @@ class REST_API extends API
 
     protected function logout()
     {
-        $this->util->is_method($this->method, 'POST');
-        //$this->User = new \Models\User();
-        $this->User->logout($this->request['username'], $this->request['token']);
-
-        return $this->User->get(Array('username', 'token'));
+        $this->allowed_methods('GET');
+        if($this->check_auth_session()){
+            $this->User->logout();
+        }else{
+            throw new Exception(400);
+        }
     }
 
     /*
@@ -140,6 +146,7 @@ class REST_API extends API
     protected function pages(){
         //deal with options first
         $this->allowed_methods('GET');
+
         if($this->method === 'OPTIONS'){
             return null;
         }

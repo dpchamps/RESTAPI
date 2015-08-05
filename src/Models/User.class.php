@@ -12,6 +12,8 @@ require_once 'Auth.class.php';
 class User extends Auth{
 
     private $_token;
+    public $token;
+    public $username;
     private $_username;
     private $_logged_in = false;
 
@@ -30,12 +32,6 @@ class User extends Auth{
         $this->_id = $this->_id['id'];
 
         if($query->num_rows == 1){
-            //check if the user is logged in
-            if( !$this->is_inactive($this->_id) ){
-                throw new Exception('User has already logged in');
-            }
-            //user successfully logged in
-
             //create a new token, and timestamp
             $pair = $this->get_token_timestamp_pair();
             //insert token and timestamp pair into user table
@@ -45,12 +41,12 @@ class User extends Auth{
                 $pair
             );
 
-            $this->_token = (string)$pair['token'];
+            $this->token = (string)$pair['token'];
             //echo $this->_token;
             $this->_username = $username;
             $this->_logged_in = true;
         }else{
-            throw new Exception('Username or Password incorrect');
+            throw new Exception(401);
         }
     }
     public function __construct(){
@@ -82,11 +78,13 @@ class User extends Auth{
         }
         return $valid_token;
     }
-    public function logout($username, $token){
-        //if the username / token pair is not valid then nothing else needs to happen
-        if(!$this->valid_token($token, $username)){
-            throw new Exception('User session does not exist');
-        }
+    /*
+     * logout()
+     * this method should be called only after verifying a
+     * valid un/token pair, so the internal variables will be set.
+     * error otherwise
+     */
+    public function logout(){
 
         $this->_db->update(
             $this->login_table,
@@ -95,21 +93,7 @@ class User extends Auth{
         );
 
         $this->_token = NULL;
+        $this->token = NULL;
     }
-    public function get($what = ''){
-        $user_attribs = get_object_vars($this);
 
-        $return_assoc = Array();
-        if( is_array($what) ){
-            foreach( $what as $key){
-                $return_assoc[$key] = $user_attribs['_'.$key];
-            }
-        }else{
-            if(array_key_exists($what, $user_attribs)){
-                $return_assoc[$what] = $user_attribs['_'.$what];
-            }
-        }
-
-        return $return_assoc;
-    }
 } 
