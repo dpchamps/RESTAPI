@@ -6,7 +6,6 @@ require_once __DIR__.'./../Models/SQL_Statements.class.php';
 require_once __DIR__.'./../Models/Cms.class.php';
 require_once __DIR__.'./../Models/Utilities.class.php';
 class Pages {
-
     private $db;
     private $lists;
     private $sql;
@@ -77,7 +76,7 @@ class Pages {
         array_shift($this->args);
         $this->item = $item;
         if($item){
-            $this->util->allowed_methods('GET PUT POST PATCH');
+            $this->util->allowed_methods('GET PUT POST PATCH DELETE');
             return $this->menu_item();
         }
         $this->util->allowed_methods('GET');
@@ -92,7 +91,7 @@ class Pages {
     * case 'merch'
     */
     private function merch_edit(){
-        $id = $this->util->check($item['id']);
+        $id = $this->util->check($this->item['id']);
         if(!$id){
             throw new Exception(400);
         }
@@ -122,7 +121,7 @@ class Pages {
         $types = Database::get_instance()->fetch_all($types);
 
         if ($this->item) {
-            $this->util->allowed_methods('GET PUT POST PATCH');
+            $this->util->allowed_methods('GET PUT POST PATCH DELETE');
             return $this->merch_item();
         } else {
             $this->util->allowed_methods('GET');
@@ -130,7 +129,65 @@ class Pages {
         }
         return $response;
     }
+    private function press(){
+        $press_type = $this->args[0];
+        $query = $this->sql->get('press');
+        $data = $this->db->fetch_all_query($query);
+        $response = $this->lists->order_press($data);
+        if ($this->util->check($response[$press_type]) ){
+            $response = $response[$press_type];
+        }else{
+            throw new Exception(404);
+        }
+        return $response;
+    }
+    private function press_edit(){
+        $id = $this->util->check($this->item['id']);
+        if(!$id){
+            throw new Exception(400);
+        }
+    }
+    private function press_item(){
+        if($this->method === 'GET'){
+            $clause = $this->item;
+            $item_id = $this->db->select_single_item('id', 'press_items', Array('title'=>$clause));
+            if ($item_id) {
+                $text_query = $this->sql->get('press', $item_id, 'text');
+                $image_query = $this->sql->get('press', $item_id, 'image');
+                $response = $this->db->fetch_all_query($text_query);
+                $response['images'] = $this->db->fetch_all_query($image_query);
+            }else{
+                throw new Exception(404);
+            }
+            return $response;
+        }else{
+            $this->press_edit();
+        }
 
+    }
+    /*
+     * case 'press'
+     */
+    public function get_press($item)
+    {
+        $response = NULL;
+        array_shift($this->args);
+        $this->item = $item;
+
+        if( !$this->util->check( $this->args[0] ) ){
+            $response = $this->db->fetch_all_query("SELECT type FROM press_type");
+        }else{
+            if ( $this->item ){
+                $this->util->allowed_methods('GET PUT PATCH POST DELETE');
+                $response = $this->press_item();
+            } else {
+                $this->util->allowed_methods('GET');
+                $response = $this->press();
+            }
+        }
+
+        return $response;
+    }
 
     public function __construct($args, $method){
         $this->args = $args;
@@ -140,40 +197,5 @@ class Pages {
         $this->lists = new List_functions();
         $this->sql = new SQL_Statements();
         $this->util = new Utilities($this->method);
-    }
-
-
-
-
-    public function get_press($item)
-    {
-        $response = NULL;
-        array_shift($this->args);
-        if( !$this->util->check( $this->args[0] ) ){
-            $response = $this->db->fetch_all_query("SELECT type FROM press_type");
-        }else{
-            $press_type = $this->args[0];
-            if ( isset($item) ){
-                $clause = $item;
-                $item_id = $this->db->select_single_item('id', 'press_items', Array('title'=>$clause));
-                if ($item_id) {
-                    $text_query = $this->sql->get('press', $item_id, 'text');
-                    $image_query = $this->sql->get('press', $item_id, 'image');
-                    $response = $this->db->fetch_all_query($text_query);
-                    $response['images'] = $this->db->fetch_all_query($image_query);
-                }
-            } else {
-                $query = $this->sql->get('press');
-                $data = $this->db->fetch_all_query($query);
-                $response = $this->lists->order_press($data);
-                if ($this->util->check($response[$press_type]) ){
-                    $response = $response[$press_type]
-                    ;               }else{
-                    throw new Exception(404);
-                }
-            }
-        }
-
-        return $response;
     }
 }
