@@ -36,6 +36,9 @@ abstract class API {
             case 'OPTIONS':
                 //does anything need to go here?
                 break;
+            case 'HEAD':
+                //??
+                break;
             case 'DELETE':
             case 'POST':
                 if(isset($_SERVER['CONTENT_TYPE'])){

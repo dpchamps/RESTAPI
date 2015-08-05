@@ -38,7 +38,13 @@ class REST_API extends API
     }
     private function allowed_methods($string){
         $methods = explode(" ", $string);
-        return true;
+        //head and options are allowed by default
+        $methods = array_merge($methods, Array('OPTIONS', 'HEAD'));
+        //set header for allowed methods
+        header("Allow: $string");
+        if(!in_array($this->method, $methods)){
+            throw new Exception(405);
+        }
     }
     public function __construct($request)
     {
@@ -134,6 +140,9 @@ class REST_API extends API
     protected function pages(){
         //deal with options first
         $this->allowed_methods('GET');
+        if($this->method === 'OPTIONS'){
+            return null;
+        }
         $page = $this->util->check($this->args[0]);
         $response = null;
         $item = $this->util->check($this->request['item']);
@@ -161,7 +170,9 @@ class REST_API extends API
     protected function get_menu($item)
     {
         array_shift($this->args);
+
         if (!isset($this->args[0])) {
+
             $sql =  $this->sql->get('available_menus');
             $available_menus = $this->db->fetch_all_query($sql);
             if($item){
@@ -188,7 +199,6 @@ class REST_API extends API
         if( $item && $this->util->check( $raw_array[$item-1] ) ){
             return $raw_array[$item-1];
         }else{
-            //404
         }
         return $raw_array;
         //return $this->lists->order_menu_array($raw_array);
