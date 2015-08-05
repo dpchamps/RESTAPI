@@ -12,57 +12,89 @@ class Pages {
     private $sql;
     private $util;
     private $args;
+    private $method;
+    private $item;
+    private function menu_item_edit(){
+        $id = $this->util->check($this->item['id']);
 
-    public function __construct($args){
-        $this->db = Database::get_instance();
-        $this->lists = new List_functions();
-        $this->sql = new SQL_Statements();
-        $this->util = new Utilities();
-        $this->args = $args;
-
+        if(!$id){
+            throw new Exception(400);
+        }
     }
-
-    public function get_menu($item)
-    {
-        array_shift($this->args);
-        if (!isset($this->args[0])) {
-
-            $sql =  $this->sql->get('available_menus');
-            $available_menus = $this->db->fetch_all_query($sql);
-            if($item){
-                if($this->util->check($available_menus[$item-1])){
-                    return $available_menus[$item-1];
-                }else{
-                    throw new Exception(404);
-                }
-
-            }else{
-                return $available_menus;
-            }
-        }
-        $menu_type = $this->db->select('id', 'menu_type', Array(
-            'type' => $this->args[0]
-        ));
-        if ($menu_type !== false) {
-            $menu_type = $menu_type->fetch_assoc();
-            $menu_type = $menu_type['id'];
-        }
-
-        $sql_query = $this->sql->get('menu', $menu_type);
-        $raw_array = $this->db->fetch_all_query($sql_query);
-
-        $raw_array = $this->lists->build_menu($raw_array);
-        if( $item ){
-            $item = $raw_array[strval($item)];
+    private function menu_item(){
+        $menu = $this->menu();
+        if($this->method === 'GET'){
+            $item = $menu[strval($this->item)];
             if($item){
                 return $item;
             }else{
                 throw new Exception(404);
             }
+        }else{
+            return $this->menu_item_edit();
+        }
 
+    }
+    private function available_menus(){
+        $item = $this->item;
+        $sql =  $this->sql->get('available_menus');
+        $available_menus = $this->db->fetch_all_query($sql);
+        if($item){
+            if($this->util->check($available_menus[$item-1])){
+                return $available_menus[$item-1];
+            }else{
+                throw new Exception(404);
+            }
+
+        }else{
+            return $available_menus;
+        }
+    }
+
+    private function menu(){
+        $type = $this->db->select('id', 'menu_type', Array(
+            'type' => $this->args[0]
+        ));
+        if ($type !== false) {
+            $type = $type->fetch_assoc();
+            $type = $type['id'];
+            $sql_query = $this->sql->get('menu', $type);
+            $raw_array = $this->db->fetch_all_query($sql_query);
+            $raw_array = $this->lists->build_menu($raw_array);
+;        }else{
+            throw new Exception(404);
         }
         return $raw_array;
         //return $this->lists->order_menu_array($raw_array);
+
+    }
+
+
+    public function __construct($args, $method){
+        $this->args = $args;
+        $this->method = $method;
+
+        $this->db = Database::get_instance();
+        $this->lists = new List_functions();
+        $this->sql = new SQL_Statements();
+        $this->util = new Utilities($this->method);
+    }
+
+    public function get_menu($item)
+    {
+        array_shift($this->args);
+        $this->item = $item;
+        if($item){
+            $this->util->allowed_methods('GET PUT POST PATCH');
+            return $this->menu_item();
+        }
+        $this->util->allowed_methods('GET');
+        if (!isset($this->args[0])) {
+            return $this->available_menus($item);
+        }
+
+        return $this->menu();
+
     }
 
     public function get_merch($item)

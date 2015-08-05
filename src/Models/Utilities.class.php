@@ -7,6 +7,13 @@
  */
 
 class Utilities {
+    private $method;
+
+    public function __construct($method = NULL){
+        if($method){
+            $this->method = $method;
+        }
+    }
     /*
         * A helper function to shorten checks of variables that are required for variuous endpoint functions
         */
@@ -75,6 +82,17 @@ class Utilities {
         $type = strtoupper($type);
         if ($method != $type) {
             throw new Exception('Method only accepts ' . $type . " requests.");
+        }
+    }
+
+    public function allowed_methods($string){
+        $methods = explode(" ", $string);
+        //head and options are allowed by default
+        $methods = array_merge($methods, Array('OPTIONS', 'HEAD'));
+        //set header for allowed methods
+        header("Allow: $string");
+        if(!in_array($this->method, $methods)){
+            throw new Exception(405);
         }
     }
 } 

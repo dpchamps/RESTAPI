@@ -19,37 +19,6 @@ class REST_API extends API
     private $util;
     private $pages;
 
-
-    private function verify_user()
-    {
-        $User = new User();
-        /**
-         * In order for it to be a valid request, the user must have passed a unique token
-         * and username pair to the server with the request
-         */
-        if (array_key_exists('token', $this->request) &&
-            array_key_exists('username', $this->request) &&
-            !$User->valid_token($this->request['token'], $this->request['username'])
-        ) {
-            throw new Exception(401);
-        } elseif (!array_key_exists('token', $this->request) ||
-            !array_key_exists('username', $this->request)
-        ) {
-            throw new Exception(401);
-        }
-
-        $this->User = $User;
-    }
-    private function allowed_methods($string){
-        $methods = explode(" ", $string);
-        //head and options are allowed by default
-        $methods = array_merge($methods, Array('OPTIONS', 'HEAD'));
-        //set header for allowed methods
-        header("Allow: $string");
-        if(!in_array($this->method, $methods)){
-            throw new Exception(405);
-        }
-    }
     private function check_auth_session(){
         $user = $_SERVER['PHP_AUTH_USER'];
         $pw = $_SERVER['PHP_AUTH_PW'];
@@ -64,11 +33,11 @@ class REST_API extends API
         $this->lists = new List_functions();
         $this->sql = new SQL_Statements();
         $this->cms = new Cms();
-        $this->util = new Utilities();
+        $this->util = new Utilities($this->method);
         $this->User = new User();
         //endpoint models
 
-        $this->pages = new Pages($this->args);
+        $this->pages = new Pages($this->args, $this->method);
 
     }
     /**
@@ -90,7 +59,7 @@ class REST_API extends API
     }
     protected function login()
     {
-        $this->allowed_methods('GET');
+        $this->util->allowed_methods('GET');
         $user = $_SERVER['PHP_AUTH_USER'];
         $pw = $_SERVER['PHP_AUTH_PW'];
         if(!$user || !$pw){
@@ -123,7 +92,7 @@ class REST_API extends API
 
     protected function logout()
     {
-        $this->allowed_methods('GET');
+        $this->util->allowed_methods('GET');
         if($this->check_auth_session()){
             $this->User->logout();
         }else{
@@ -154,8 +123,6 @@ class REST_API extends API
      */
     protected function pages(){
         //deal with options first
-        $this->allowed_methods('GET');
-
         if($this->method === 'OPTIONS'){
             return null;
         }
@@ -168,7 +135,7 @@ class REST_API extends API
                 $response =  $this->db->fetch_all_query( $this->sql->get('available_pages') );
                 break;
             case('menus'):
-                $response = $this->pages->get_menu((int)$item);
+                $response = $this->pages->get_menu($item);
                 break;
             case('merch'):
                 $response = $this->pages->get_merch($item);
