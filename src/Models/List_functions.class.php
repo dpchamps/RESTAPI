@@ -17,9 +17,22 @@ class List_functions {
         $this->db->update($table_name, $id_1, Array('list_order' => $lo_2));
         $this->db->update($table_name, $id_2, Array('list_order' => $lo_1));
     }
+    /*
+     * function majke_sequential_arr
+     *
+     * strips first level keys, returns an array
+     */
+    public function make_sequential_arr($arr){
+        $s_arr = Array();
+        foreach($arr as $val){
+            array_push($s_arr, $val);
+        }
+        return $s_arr;
+    }
 
     public function build_menu($arr){
         $unique_array = Array();
+        $sequential_array = Array();
         foreach($arr as $idx => $item){
             $id = (int)$item['id'];
             if (array_key_exists($id, $unique_array) ){
@@ -48,7 +61,7 @@ class List_functions {
                 );
             }
         }
-        return $unique_array;
+        return $this->make_sequential_arr($unique_array);
     }
     public function build_merch($arr){
         $return_array = Array(

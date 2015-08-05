@@ -24,7 +24,7 @@ class Pages {
     private function menu_item(){
         $menu = $this->menu();
         if($this->method === 'GET'){
-            $item = $menu[strval($this->item)];
+            $item = $menu[(int)($this->item)-1];
             if($item){
                 return $item;
             }else{
