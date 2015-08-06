@@ -13,16 +13,38 @@ class Pages {
     private $args;
     private $method;
     private $item;
+    private $cms;
 
+    public function __construct($args, $method){
+        $this->args = $args;
+        $this->method = $method;
+
+        $this->db = Database::get_instance();
+        $this->lists = new List_functions();
+        $this->sql = new SQL_Statements();
+        $this->util = new Utilities($this->method);
+        $this->cms = new Cms();
+    }
     /*
      * case 'menu'
      */
     private function menu_item_edit(){
         $id = $this->util->check($this->item['id']);
-
         if(!$id){
             throw new Exception(400);
         }
+        switch($this->method){
+            case('PUT'):
+                $this->cms->item_edit($this->item);
+            case('POST'):
+                $this->cms->add_item($this->item);
+                break;
+            case('DELETE'):
+                //change list_order to zero
+                $this->cms->remove_item('menu_items', $id);
+                break;
+        }
+
     }
     private function menu_item(){
         $menu = $this->menu();
@@ -189,13 +211,5 @@ class Pages {
         return $response;
     }
 
-    public function __construct($args, $method){
-        $this->args = $args;
-        $this->method = $method;
 
-        $this->db = Database::get_instance();
-        $this->lists = new List_functions();
-        $this->sql = new SQL_Statements();
-        $this->util = new Utilities($this->method);
-    }
 }

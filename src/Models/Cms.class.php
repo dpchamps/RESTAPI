@@ -79,84 +79,80 @@ class Cms {
          *insert into
          */
     }
+    private function update_descriptions($item_id, $desc_array=Array()){
+        foreach($desc_array as $desc){
+            $id = $this->utilities->check($desc['id']);
+            $text = $this->utilities->check($desc['text']);
+            $price = $this->utilities->check($desc['price']);
+
+            //delete item if no text is given
+            if(!$text){
+                $sql = "DELETE FROM menu_descriptions WHERE id = $id";
+                $this->db->query($sql);
+                $this->db->query("DELETE FROM menu_subprices WHERE desc_id=$id");
+            }else{
+                $vals = "";
+                if(!$id){
+                    $vals = "(NULL, '$item_id', '$text')";
+                }else{
+                    $vals = "('$id', '$item_id', '$text')";
+                }
+                $description_update = "INSERT INTO menu_descriptions
+                        (id, item_id, description)
+                        VALUES
+                        $vals
+                        ON DUPLICATE KEY UPDATE
+                        description = '$text'
+                        ";
+                $this->db->query($description_update);
+                if($price){
+                    $price = (string)$price;
+                    $sid = $this->db->select_single_item('id', 'menu_subprices', Array('desc_id'=> $id));
+                    $vals = ($sid) ? "('$sid', '$id', '$price')" : "(NULL, '$id', '$price')";
+
+                    $this->db->query("INSERT INTO menu_subprices
+                        (id, desc_id, sub_price)
+                        VALUES
+                        $vals
+                        ON DUPLICATE KEY UPDATE
+                        sub_price = '$price'
+                    ");
+
+                }
+            }
+
+        }
+
+    }
+    private function update_title($title, $id){
+        $this->db->update('menu_items', $id, Array('title' => $title));
+    }
+    private function update_price($price, $id){
+        $price = (string)$price;
+        $this->db->query("UPDATE menu_prices SET price='$price' WHERE item_id=$id");
+    }
     public function item_edit($update_cols = Array()){
         $value = $update_cols;
-        $item_id = $this->utilities->required($value['id'], "Item not found.");
+        $item_id = $this->utilities->required($value['id'], 404);
         $item_title = $this->utilities->check($value['title']);
         $item_price = $this->utilities->check($value['price']);
         $desc_array = $this->utilities->check($value['descriptions']);
         $subprice_array = $this->utilities->check($value['subprices']);
+        $response = false;
 
 
         //update title
         if($item_title){
-            $this->db->update('menu_items', $item_id, Array('title' => $item_title));
+            $this->update_title($item_title, $item_id);
         }
         //update price
-
         if($item_price){
-            $item_price = (string)$item_price;
-            $this->db->query("UPDATE menu_prices SET price='$item_price' WHERE item_id=$item_id");
+           $this->update_price($item_price, $item_id);
         }
-
-        //update description id / text pairs
         if(is_array($desc_array)){
-            foreach($desc_array as $desc){
-                $id = $this->utilities->check($desc['id']);
-                $text = $this->utilities->check($desc['text']);
-
-                if(!$text){
-                    $sql = "DELETE FROM menu_descriptions WHERE id = $id";
-                    $this->db->query($sql);
-                }else{
-                    $vals = "";
-                    if(!$id){
-                        $vals = "(NULL, '$item_id', '$text')";
-
-                    }else{
-                        $vals = "('$id', '$item_id', '$text')";
-                    }
-                    $description_update = "INSERT INTO menu_descriptions
-                            (id, item_id, description)
-                            VALUES
-                            $vals
-                            ON DUPLICATE KEY UPDATE
-                            description = '$text'
-                            ";
-                    $this->db->query($description_update);
-                    if(!$id){
-                        $id = $this->db->select_single_item('id', "menu_descriptions", Array('item_id' => $item_id, 'description' => $text));
-                        $potential_text = NULL;
-                        foreach($subprice_array as $key => $val){
-                            if(!$val['desc_id']){
-                                $potential_text = $val['text'];
-                                unset($subprice_array[$key]);
-                                break;
-                            }
-                        }
-
-                        $this->db->query("INSERT INTO menu_subprices
-                          (id, desc_id, sub_price)
-                          VALUES
-                          (NULL, $id, $potential_text)
-                        ");
-                    }
-                }
-            }
+            $this->update_descriptions($item_id, $desc_array);
         }
 
-        if(is_array($subprice_array)){
-            //update description id / subprice pairs
-            foreach($subprice_array as $subprice){
-                $id = $this->utilities->check($subprice['desc_id']);
-                $text = $this->utilities->check($subprice['text']);
-                if(!$id || ! $text){
-                    //do nothing
-                }else {
-                    $this->db->query("UPDATE menu_subprices SET sub_price='$text' WHERE desc_id=$id");
-                }
-            }
-        }
     }
     /*
      * Sets an item's list_order to zero and reorders the list.
