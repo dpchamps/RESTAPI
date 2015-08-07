@@ -53,15 +53,7 @@ class Cms {
     private function get_header_id($table_name, $item_id){
         return $this->db->select_single_item('header_id', $table_name, Array('id' => $item_id));
     }
-    /*
-     * self explanetory...
-     */
-    private function response_object($group, $subDivide){
-        return Array(
-            'group' => $group,
-            'subDivide' => $subDivide
-        );
-    }
+
     public function __construct(){
         $this->db = Database::get_instance();
         $this->lists = new List_functions();
@@ -105,6 +97,7 @@ class Cms {
                 echo "IS ARRAY";
                 $this->update_descriptions($item_id, $desc_array);
             }
+            $this->reorder_section($header_id);
         }
     }
     private function update_descriptions($item_id, $desc_array=Array()){
@@ -203,57 +196,7 @@ class Cms {
     public function swap_items($table_name, $id_1, $id_2){
         $this->lists->swap_menu_items($table_name, $id_1, $id_2);
     }
-    /*
-     * utility methods
-     */
-    public function action($verb, &$request_vars){
-        switch($verb){
-            case('item_edit'):
-                $this->utilities->required($request_vars['update_columns'], "Nothing to update", NULL, true);
-                return $this->item_edit($request_vars['update_columns']);
-                break;
-            case('swap'):
-                $table_name = $request_vars['table_name'];
-                $item_1 = $request_vars['item_1'];
-                $item_2 = $request_vars['item_2'];
-                $this->swap_items($table_name, $item_1, $item_2);
-                break;
-            case('remove'):
-                $table_name = $request_vars['table_name'];
-                $item = $request_vars["item"];
-                $this->remove_item($table_name, $item);
-                break;
-            case('undelete'):
-                $table_name = $request_vars['table_name'];
-                $id = $request_vars["id"];
-                $this->undelete($table_name, $id);
-                break;
-            case('add_item'):
-                $this->utilities->required($request_vars['update_columns'], "Nothing to update", NULL, true);
 
-                break;
-            default:
-                throw new Exception('Unknown verb');
-        }
-    }
-    public function get_cms_content($base, &$sub_type){
-        $page_type = $base."_type";
-        $content_division = $this->get_sub($page_type);
-        $content_type = 1;
-        if($content_division){
-            $content_type = $this->get_sub_type($content_division, $page_type, $sub_type);
-        }
-        $query = ""; $group = "";
-        switch(strtolower($base)){
-            case('menu'):
-                $query = $this->sql->get('menu', $content_type);
-                $group = $this->db->fetch_all_query($query);
-                $group = $this->lists->order_menu_cms($group);
-                break;
-        }
-
-        return $this->response_object($group, $content_division);
-    }
     public function get_sub($category){
         return $this->db->fetch_all_query("SELECT type FROM $category");
     }
