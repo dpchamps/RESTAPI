@@ -81,7 +81,7 @@ class REST_API extends API
         }
         $this->User = new User();
         $this->User->login($user, $pw);
-        return $this->User->token;
+        return Array('token'=>$this->User->token);
     }
 
     protected function check_login()
@@ -138,6 +138,7 @@ class REST_API extends API
     protected function pages(){
         //deal with options first
         if($this->method === 'OPTIONS'){
+            $this->util->allowed_methods('GET PUT POST PATCH DELETE');
             return null;
         }
         $page = $this->util->check($this->args[0]);
@@ -164,81 +165,27 @@ class REST_API extends API
 
         return $response;
     }
-
-
-    /*
-     * url structure:
-     *
-     * /items
-     *      returns an object of item types, i.e. {'type' : 'menu', type: 'merch' ...}
-     *
-     *
-     */
-    protected function get_content()
-    {
-        $table = "";
-        $cols = "";
-        $vals = NULL;
-        if (isset($this->args[0])) {
-            $table = $this->util->parse_url_array($this->args[0]);
-        } else {
-            throw new Exception(412);
-        }
-        if (isset($this->args[1])) {
-            $cols = $this->util->parse_url_array($this->args[1]);
-        }
-        if (isset($this->args[2])) {
-            $vals = $this->util->parse_url_key_value($this->args[2]);
-        }
-
-        $result = $this->db->select($cols, $table, $vals);
-        if ($result === false) {
-            throw new Exception(404);
-        } else {
-            return $this->db->fetch_all($result);
-        }
-
-    }
-
-
-
-    protected function get_page()
-    {
-        $page = $this->util->required($this->args[0], "Please specify page data.");
-        $page_id = $this->db->select_single_item('id', 'page_data', Array('title'=>$page));
-
-        if (!$page_id) {
-            throw new Exception(404);
-        }
-        $page_query = $this->sql->get('page', $page_id);
-        $page_data = $this->db->fetch_all_query($page_query);
-
-        if (!$page_data) {
-            throw new Exception(404);
-        } else {
-            return $page_data[0];
-        }
-    }
-
-    protected function cms()
-    {
-        $this->util->is_method($this->method, 'POST');
-        $action = $this->util->required($this->args[0], "No content specified.");
-        $response = NULL;
-        switch ($action) {
-            case('page_data'):
-                $response = $this->get_content();
+    public function user(){
+        $this->util->allowed_methods('POST');
+        $option = $this->args[0];
+        switch($option){
+            case('change-password'):
+                $old_pw = $this->util->check($this->request['password']);
+                $new_pw = $this->util->check($this->request['new_password']);
+                if(!$old_pw || !$new_pw){
+                    //bad request, requires old and new
+                    throw new Exception(400);
+                }else{
+                    $username = $this->User->username;
+                    $this->User->login($username, $old_pw);
+                    $this->User->change_password($new_pw);
+                    return Array('token'=>$this->User->token);
+                }
                 break;
-            case('page_content'):
-                $base = $this->util->required($this->args[1], "No content specified");
-                $response = $this->cms->get_cms_content($base, $this->args[2]);
+            case('change-username'):
                 break;
-            case('action'):
-                $verb = $this->util->required($this->args[1], "Must specify verb");
-                return $this->cms->action($verb, $this->request);
-                break;
+            default:
+                throw new Exception(404);
         }
-
-        return $response;
     }
 }

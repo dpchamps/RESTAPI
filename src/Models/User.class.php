@@ -43,7 +43,7 @@ class User extends Auth{
 
             $this->token = (string)$pair['token'];
             //echo $this->_token;
-            $this->_username = $username;
+            $this->username = $username;
             $this->_logged_in = true;
         }else{
             throw new Exception(401);
@@ -69,8 +69,8 @@ class User extends Auth{
 
             $valid_token = true;
 
-            $this->_username = $username;
-            $this->_token = $token;
+            $this->username = $username;
+            $this->token = $token;
         }
         //upon successful request, update the timestamp
         if($valid_token){
@@ -92,8 +92,20 @@ class User extends Auth{
             Array('token' => NULL, 'token_timestamp' => NULL)
         );
 
-        $this->_token = NULL;
         $this->token = NULL;
     }
 
+    /*
+     * change user password
+     */
+    public function change_password($new_pw){
+        //insert new password
+        $this->_db->update(
+            $this->login_table,
+            $this->_id,
+            Array('password' => MD5($new_pw))
+        );
+        //update timestamp
+        $this->update_timestamp();
+    }
 } 
