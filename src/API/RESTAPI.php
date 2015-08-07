@@ -24,10 +24,17 @@ class REST_API extends API
         $pw = $_SERVER['PHP_AUTH_PW'];
         return $this->User->valid_token($pw, $user);
     }
-    public function __construct($request)
-    {
-        parent::__construct($request);
-        //Database instance
+    private function authorize_user(){
+        $protected_methods = Array(
+            'PUT', 'PUSH', 'PATCH', 'DELETE', 'POST'
+        );
+        if(in_array($this->method, $protected_methods)){
+            if( !$this->check_auth_session() ){
+                throw new Exception(401);
+            }
+        }
+    }
+    private function initialize(){
         $this->db = Database::get_instance();
         //models
         $this->lists = new List_functions();
@@ -38,7 +45,14 @@ class REST_API extends API
         //endpoint models
 
         $this->pages = new Pages($this->args, $this->method);
-
+    }
+    public function __construct($request)
+    {
+        parent::__construct($request);
+        //Database instance
+        $this->initialize();
+        //if the user is doing something other than get, make sure they're logged in.
+        $this->authorize_user();
     }
     /**
      * Endpoint methods
