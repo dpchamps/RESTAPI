@@ -30,13 +30,14 @@ class Pages {
      */
     private function menu_item_edit(){
         $id = $this->util->check($this->item['id']);
-        if(!$id){
-            throw new Exception(400);
-        }
+        //if(!$id){
+        //    throw new Exception(400);
+        //}
         switch($this->method){
             case('PUT'):
                 $this->cms->item_edit($this->item);
             case('POST'):
+                $this->item['menu_type'] = $this->args[0];
                 $this->cms->add_item($this->item);
                 break;
             case('DELETE'):

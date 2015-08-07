@@ -72,12 +72,40 @@ class Cms {
      * action methods
      */
     public function add_item($update_cols = Array()){
-        /*insert into menu_items
-            title, header_id, menu_type_id, list_order
-        */
-        /*
-         *insert into
-         */
+        //menu_items, menu_prices, menu_subprices, menu_descriptions
+        $item = $update_cols;
+        $id = $this->db->select_single_item('id', 'menu_items', Array('id' => $item['id']));
+        $title = $this->utilities->check($update_cols['title']);
+        $header_id = $this->utilities->check($update_cols['header']);
+        $header_id = $this->db->select_single_item('id', 'menu_headers', Array('header'=> $header_id));
+        $menu_type_id  = $this->utilities->check($update_cols['menu_type']);
+        $menu_type_id = $this->db->select_single_item('id', 'menu_type', Array('type' => $menu_type_id));
+        $list_order = $this->utilities->check($update_cols['list_order']);
+        $price = $this->utilities->check($update_cols['price']);
+        $desc_array = $this->utilities->check($update_cols['descriptions']);
+        $vals = "(NULL, '$title', $header_id, $menu_type_id, $list_order)";
+        if($id){
+            $this->item_edit($update_cols);
+        }else{
+            $ins_menu_items = "INSERT INTO menu_items
+              (id, title, header_id, menu_type_id, list_order)
+              VALUES
+              $vals
+            ";
+            $this->db->query($ins_menu_items);
+            $item_id = $this->db->get_connection()->insert_id;
+            $ins_price = "INSERT INTO menu_prices
+              (id, item_id, price)
+              VALUES
+              (NULL, $item_id, '$price')
+            ";
+          
+            $this->db->query($ins_price);
+            if(is_array($desc_array)){
+                echo "IS ARRAY";
+                $this->update_descriptions($item_id, $desc_array);
+            }
+        }
     }
     private function update_descriptions($item_id, $desc_array=Array()){
         foreach($desc_array as $desc){
