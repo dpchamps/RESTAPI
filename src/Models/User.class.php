@@ -17,6 +17,21 @@ class User extends Auth{
     private $_username;
     private $_logged_in = false;
 
+    public function check_password($password){
+        $id = $this->_db->select_single_item(
+            'id',
+            $this->login_table,
+            Array(
+               'username' => $this->username,
+               'password' => MD5($password)
+            )
+        );
+        if(!$id){
+            throw new Exception(401);
+        }else{
+            return true;
+        }
+    }
     public function login($username, $password){
 
         //select from the users table the id where username and the MD5 hash of the password exist
@@ -107,5 +122,29 @@ class User extends Auth{
         );
         //update timestamp
         $this->update_timestamp();
+    }
+    /*
+     * change username
+     */
+    public function change_username($new_username, $password){
+        //check db to make sure username doesnt exist
+        $exists = $this->_db->select_single_item('id',
+            $this->login_table,
+            Array('username'=> $new_username)
+        );
+        echo $exists;
+        if(!$exists){
+            $this->check_password($password);
+            $this->_db->update(
+                $this->login_table,
+                $this->_id,
+                Array('username'=>$new_username)
+            );
+            $this->login($new_username, $password);
+            $this->username = $new_username;
+            $this->update_timestamp();
+        }else{
+            throw new Exception(409);
+        }
     }
 } 

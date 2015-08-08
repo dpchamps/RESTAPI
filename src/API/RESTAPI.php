@@ -183,6 +183,17 @@ class REST_API extends API
                 }
                 break;
             case('change-username'):
+                $pw = $this->util->check($this->request['password']);
+                $new_username = $this->util->check($this->request['new_username']);
+                if(!$pw || !$new_username){
+                    throw new Exception(400);
+                }else{
+                    $this->User->change_username($new_username, $pw);
+                    return Array(
+                        'username' => $this->User->username,
+                        'token' => $this->User->token
+                    );
+                }
                 break;
             default:
                 throw new Exception(404);
