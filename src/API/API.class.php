@@ -3,11 +3,11 @@
 require_once __DIR__.'./../config.php';
 abstract class API {
     protected $method = '';
-    
+
     protected $endpoint = '';
 
     protected $args = Array();
-    
+
     protected $file = Null;
 
     public function __construct($request){
@@ -15,6 +15,7 @@ abstract class API {
         if(ALLOW_CORS){
             header("Access-Control-Allow-Origin: *");
             header("Access-Control-Allow-Methods: *");
+            header("Access-Control-Allow-Headers: Authorization, Content-Type");
         }
         header("Content-Type: application/json");
 
@@ -122,4 +123,4 @@ abstract class API {
         );
         return ($status[$code]) ? $status[$code] : $status[500];
     }
-} 
+}
