@@ -14,7 +14,7 @@ abstract class API {
         //check the config file to see if CORS is enabled
         if(ALLOW_CORS){
             header("Access-Control-Allow-Origin: *");
-            header("Access-Control-Allow-Methods: *");
+            header("Access-Control-Allow-Methods: GET, POST, PUT, PATCH, OPTIONS, HEAD, DELETE");
             header("Access-Control-Allow-Headers: Authorization, Content-Type");
         }
         header("Content-Type: application/json");

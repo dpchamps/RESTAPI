@@ -107,10 +107,8 @@ class Pages {
         array_shift($this->args);
         $this->item = $item;
         if($item){
-            $this->util->allowed_methods('GET PUT POST PATCH DELETE');
             return $this->menu_item();
         }
-        $this->util->allowed_methods('GET');
         if (!isset($this->args[0])) {
             return $this->available_menus($item);
         }
@@ -152,10 +150,8 @@ class Pages {
         $types = Database::get_instance()->fetch_all($types);
 
         if ($this->item) {
-            $this->util->allowed_methods('GET PUT POST PATCH DELETE');
             return $this->merch_item();
         } else {
-            $this->util->allowed_methods('GET');
             $response = $types;
         }
         return $response;
@@ -209,10 +205,8 @@ class Pages {
             $response = $this->db->fetch_all_query("SELECT type FROM press_type");
         }else{
             if ( $this->item ){
-                $this->util->allowed_methods('GET PUT PATCH POST DELETE');
                 $response = $this->press_item();
             } else {
-                $this->util->allowed_methods('GET');
                 $response = $this->press();
             }
         }

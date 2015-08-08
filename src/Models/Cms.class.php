@@ -91,7 +91,7 @@ class Cms {
               VALUES
               (NULL, $item_id, '$price')
             ";
-          
+
             $this->db->query($ins_price);
             if(is_array($desc_array)){
                 echo "IS ARRAY";
@@ -182,7 +182,7 @@ class Cms {
      */
     public function remove_item($table_name, $item_id){
         $item = Array('list_order' => '0');
-
+        echo "$item, $item_id, $table_name";
         $header_id = $this->get_header_id($table_name, $item_id);
         $this->db->update($table_name, $item_id, $item);
         $this->reorder_section($header_id);
@@ -210,4 +210,4 @@ class Cms {
         return $this->db->select_single_item('id', $category, Array('type' => $type));
     }
 
-} 
+}
