@@ -47,10 +47,18 @@ class Pages {
         }
 
     }
+
     private function menu_item(){
         $menu = $this->menu();
         if($this->method === 'GET'){
-            $item = $menu[(int)($this->item)-1];
+            //$item = $menu[(int)($this->item)-1];
+            $item = NULL;
+            foreach($menu as $val){
+                if($this->item === $val['id']){
+                    $item = $val;
+                    break 1;
+                }
+            }
             if($item){
                 return $item;
             }else{
