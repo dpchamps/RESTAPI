@@ -74,6 +74,9 @@ class REST_API extends API
     protected function login()
     {
         $this->util->allowed_methods('GET');
+        if($this->method === 'OPTIONS'){
+            return NULL;
+        }
         $user = $_SERVER['PHP_AUTH_USER'];
         $pw = $_SERVER['PHP_AUTH_PW'];
         if(!$user || !$pw){
@@ -81,32 +84,25 @@ class REST_API extends API
         }
         $this->User = new User();
         $this->User->login($user, $pw);
-        return Array('token'=>$this->User->token);
+        return Array('username'=>$this->User->username, 'token'=>$this->User->token);
     }
 
     protected function check_login()
     {
         $response = false;
-        $this->util->is_method($this->method, "POST");
-        if (
-            !array_key_exists('username', $this->request) ||
-            !array_key_exists('token', $this->request)
-        ) {
-            return false;
-        } else {
-            $this->User = new User();
-            if ($this->User->valid_token($this->request['token'], $this->request['username'])) {
-                $response = $this->User->get(Array('username', 'token'));
-
-            }
+        $this->util->allowed_methods($this->method, "GET");
+        if($this->method === "OPTIONS"){
+            return null;
         }
-
-        return $response;
+        return $this->check_auth_session();
     }
 
     protected function logout()
     {
         $this->util->allowed_methods('GET');
+        if($this->method === 'OPTIONS'){
+            return NULL;
+        }
         if($this->check_auth_session()){
             $this->User->logout();
         }else{

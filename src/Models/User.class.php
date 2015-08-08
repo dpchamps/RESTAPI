@@ -90,8 +90,10 @@ class User extends Auth{
         //upon successful request, update the timestamp
         if($valid_token){
             $this->update_timestamp();
+            return $valid_token;
+        }else{
+            throw new Exception(401);
         }
-        return $valid_token;
     }
     /*
      * logout()
@@ -147,4 +149,4 @@ class User extends Auth{
             throw new Exception(409);
         }
     }
-} 
+}
