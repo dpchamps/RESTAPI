@@ -148,6 +148,7 @@ class REST_API extends API
         switch($page){
             case(false):
                 $response =  $this->db->fetch_all_query( $this->sql->get('available_pages') );
+                
                 break;
             case('menus'):
                 $response = $this->pages->get_menu($item);
