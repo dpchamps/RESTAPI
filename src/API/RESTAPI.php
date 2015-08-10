@@ -140,7 +140,6 @@ class REST_API extends API
         $page = $this->util->check($this->args[0]);
         $response = null;
         $item = $this->util->check($this->request['item']);
-        echo "REQUEST: $item\n\n";
         switch($page){
             case(false):
                 $response =  $this->db->fetch_all_query( $this->sql->get('available_pages') );
