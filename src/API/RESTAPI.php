@@ -22,17 +22,34 @@ class REST_API extends API
     private function check_auth_session(){
         $user = $_SERVER['PHP_AUTH_USER'];
         $pw = $_SERVER['PHP_AUTH_PW'];
-        return $this->User->valid_token($pw, $user);
+        $valid = $this->User->valid_token($pw, $user);
+        if( !$valid ){
+            throw new Exception(401);
+        }else{
+            return $valid;
+        };
+
     }
     private function authorize_user(){
         $protected_methods = Array(
             'PUT', 'PUSH', 'PATCH', 'DELETE', 'POST'
         );
+        //first, enforce login for protected methods,
+        //  i.e., the user is altering (or attempting) something...
         if(in_array($this->method, $protected_methods)){
-            if( !$this->check_auth_session() ){
-                throw new Exception(401);
-            }
+            $this->check_auth_session();
         }
+        /*
+        Next, the user isn't trying to alter anythign, but is sending auth headers.
+          So, if they're wrong, issue a 401.
+
+        Note to self: At the moment, it seems that we should only check the auth session if AUTH_USER and AUTH_PW
+              is present
+        */
+        elseif($_SERVER['PHP_AUTH_USER'] && $_SERVER['PHP_AUTH_PW']){
+            $this->check_auth_session();
+        }
+
     }
     private function initialize(){
         $this->db = Database::get_instance();
@@ -43,7 +60,6 @@ class REST_API extends API
         $this->util = new Utilities($this->method);
         $this->User = new User();
         //endpoint models
-
         $this->pages = new Pages($this->args, $this->method);
     }
     public function __construct($request)
@@ -51,7 +67,6 @@ class REST_API extends API
         parent::__construct($request);
         //Database instance
         $this->initialize();
-        //if the user is doing something other than get, make sure they're logged in.
         $this->authorize_user();
     }
     /**
