@@ -42,11 +42,12 @@ class REST_API extends API
         /*
         Next, the user isn't trying to alter anythign, but is sending auth headers.
           So, if they're wrong, issue a 401.
+        Exception: if the user is trying to login, we handle the auth differently;
 
         Note to self: At the moment, it seems that we should only check the auth session if AUTH_USER and AUTH_PW
               is present
         */
-        elseif($_SERVER['PHP_AUTH_USER'] && $_SERVER['PHP_AUTH_PW']){
+        elseif($_SERVER['PHP_AUTH_USER'] && $_SERVER['PHP_AUTH_PW'] && $this->endpoint !== 'login'){
             $this->check_auth_session();
         }
 
