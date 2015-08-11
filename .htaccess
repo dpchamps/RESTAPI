@@ -1,0 +1,5 @@
+<ifModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule api/(.*)$ src/server.php?request=$1 [QSA,NC,L]
+    #RewriteRule (.*) index.html [L]
+</ifModule>

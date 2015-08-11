@@ -105,8 +105,9 @@ class Pages {
     public function get_menu($item)
     {
         array_shift($this->args);
-        $this->item = $item;
-        if($item){
+        // api/pages/menus/food/arg[1]
+        $this->item = $item ? $item : $this->args[1];
+        if($this->item){
             return $this->menu_item();
         }
         if (!isset($this->args[0])) {
